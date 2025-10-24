@@ -38,13 +38,23 @@ st.markdown("""
         padding: 2rem;
         text-align: center;
         background-color: #f8f9fa;
+        color: #333333;
     }
     .feature-card {
-        background: white;
+        background: #f8f9fa;
         padding: 1.5rem;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         margin: 1rem 0;
+        border: 1px solid #e0e0e0;
+    }
+    .feature-card h3 {
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    .feature-card p {
+        color: #333333;
+        margin: 0;
     }
     .metric-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
