@@ -12,7 +12,7 @@ import uuid
 
 from utils.config import settings
 from utils.logger import setup_logger
-from services.file_processor import FileProcessor
+from services.file_processing import FileProcessor
 
 router = APIRouter()
 logger = setup_logger(__name__)
@@ -233,26 +233,28 @@ async def list_files(category: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Error listing files: {str(e)}")
 
 
-@router.delete("/delete/{file_id}")
-async def delete_file(file_id: str):
+@router.delete("/delete/{filename}")
+async def delete_file(filename: str):
     """
-    Delete a file by ID
+    Delete a file by filename
     
     Args:
-        file_id: File ID to delete
+        filename: Filename or file_id to delete
     
     Returns:
         Deletion status
     """
     try:
-        # Search for file with this ID
+        # Search for file with this name or ID
         upload_path = Path(settings.UPLOAD_DIR)
         deleted = False
+        deleted_path = None
         
-        for file_path in upload_path.rglob(f"*{file_id}*"):
+        for file_path in upload_path.rglob(f"*{filename}*"):
             if file_path.is_file():
                 os.remove(file_path)
                 deleted = True
+                deleted_path = str(file_path)
                 logger.info(f"File deleted: {file_path.name}")
                 break
         
@@ -261,7 +263,8 @@ async def delete_file(file_id: str):
         
         return {
             "success": True,
-            "message": "File deleted successfully"
+            "message": "File deleted successfully",
+            "deleted_file": deleted_path
         }
         
     except HTTPException:

@@ -110,6 +110,16 @@ def get_uploaded_files(category: Optional[str] = None):
         return None
 
 
+def delete_file(filename: str):
+    """Delete a file"""
+    try:
+        response = requests.delete(f"{API_BASE_URL}/files/delete/{filename}")
+        return response.json()
+    except Exception as e:
+        st.error(f"Error deleting file: {str(e)}")
+        return None
+
+
 def main():
     """Main application"""
     
@@ -397,7 +407,13 @@ def show_library_page():
                 
                 with col4:
                     if st.button("🗑️", key=f"delete_{idx}"):
-                        st.warning("Delete functionality coming soon!")
+                        with st.spinner("Deleting file..."):
+                            result = delete_file(file['filename'])
+                            if result and result.get("success"):
+                                st.success("✅ File deleted successfully!")
+                                st.rerun()
+                            else:
+                                st.error("Failed to delete file")
                 
                 st.divider()
     else:
@@ -405,19 +421,310 @@ def show_library_page():
 
 
 def show_analysis_page():
-    """Analysis page - placeholder for Phase 2"""
+    """Analysis page with document analysis features"""
     
     st.write("### 📊 Document Analysis")
-    st.info("🚧 Document analysis features will be available in Phase 2")
+    st.write("Analyze uploaded documents for investment insights")
     
-    st.write("""
-    **Coming Soon:**
-    - 📄 Automated document summarization
-    - 🔍 Key insights extraction
-    - 🚨 Red flag identification
-    - 💡 AI-powered recommendations
-    - 📈 Trend analysis
-    """)
+    # Get uploaded files
+    files_data = get_uploaded_files()
+    
+    if not files_data or not files_data.get("files"):
+        st.warning("📭 No documents uploaded yet. Please upload documents first!")
+        return
+    
+    files = files_data["files"]
+    
+    # File selection
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        selected_file = st.selectbox(
+            "Select a document to analyze",
+            options=[f['filename'] for f in files],
+            help="Choose a document from your uploaded files"
+        )
+    
+    with col2:
+        analysis_type = st.selectbox(
+            "Analysis Type",
+            options=["comprehensive", "summary", "red_flags", "financial"],
+            help="Type of analysis to perform"
+        )
+    
+    # Analyze button
+    if st.button("🔍 Analyze Document", type="primary", use_container_width=True):
+        with st.spinner(f"Analyzing {selected_file}..."):
+            try:
+                response = requests.post(
+                    f"{API_BASE_URL}/analysis/analyze",
+                    json={
+                        "filename": selected_file,
+                        "analysis_type": analysis_type
+                    }
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    if result.get("success"):
+                        st.success("✅ Analysis completed successfully!")
+                        
+                        # Display results based on analysis type
+                        analysis = result.get("analysis", {})
+                        
+                        if analysis_type == "comprehensive":
+                            display_comprehensive_analysis(analysis, result)
+                        elif analysis_type == "summary":
+                            display_summary_analysis(analysis)
+                        elif analysis_type == "red_flags":
+                            display_red_flags_analysis(analysis)
+                        elif analysis_type == "financial":
+                            display_financial_analysis(analysis)
+                    else:
+                        st.error(f"Analysis failed: {result.get('error')}")
+                else:
+                    st.error(f"API Error: {response.status_code} - {response.text}")
+                    
+            except Exception as e:
+                st.error(f"Error analyzing document: {str(e)}")
+    
+    # Quick actions
+    st.divider()
+    st.write("### 🚀 Quick Actions")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("📄 Extract Content", use_container_width=True):
+            with st.spinner("Extracting content..."):
+                try:
+                    response = requests.get(f"{API_BASE_URL}/analysis/extract/{selected_file}")
+                    if response.status_code == 200:
+                        result = response.json()
+                        st.success("✅ Content extracted!")
+                        
+                        with st.expander("📄 Extracted Text", expanded=True):
+                            st.text_area("Content", result.get("text", ""), height=300)
+                        
+                        if result.get("tables"):
+                            with st.expander(f"📊 Tables ({result.get('table_count', 0)})"):
+                                st.json(result.get("tables"))
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+    
+    with col2:
+        if st.button("🚨 Red Flags Only", use_container_width=True):
+            with st.spinner("Detecting red flags..."):
+                try:
+                    response = requests.get(f"{API_BASE_URL}/analysis/red-flags/{selected_file}")
+                    if response.status_code == 200:
+                        result = response.json()
+                        if result.get("success"):
+                            analysis = result.get("analysis", {})
+                            display_red_flags_analysis(analysis)
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+    
+    with col3:
+        if st.button("📝 Quick Summary", use_container_width=True):
+            with st.spinner("Generating summary..."):
+                try:
+                    response = requests.get(f"{API_BASE_URL}/analysis/summary/{selected_file}")
+                    if response.status_code == 200:
+                        result = response.json()
+                        if result.get("success"):
+                            analysis = result.get("analysis", {})
+                            display_summary_analysis(analysis)
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+
+
+def display_comprehensive_analysis(analysis: dict, result: dict):
+    """Display comprehensive analysis results"""
+    
+    # Summary
+    st.write("### � Document Summary")
+    summary = analysis.get("summary", {})
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Document Type", summary.get("document_type", "N/A"))
+    with col2:
+        st.metric("Word Count", f"{summary.get('word_count', 0):,}")
+    with col3:
+        st.metric("Tables", summary.get("table_count", 0))
+    with col4:
+        has_tables = "✅" if summary.get("has_tables") else "❌"
+        st.metric("Has Tables", has_tables)
+    
+    if summary.get("preview"):
+        with st.expander("� Document Preview"):
+            st.write(summary.get("preview"))
+    
+    # Red Flags
+    st.write("### 🚨 Red Flags Analysis")
+    red_flags = analysis.get("red_flags", {})
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        severity_color = {
+            "high": "🔴",
+            "medium": "🟡",
+            "low": "🟢"
+        }
+        severity = red_flags.get("severity_level", "low")
+        st.metric("Severity Level", f"{severity_color.get(severity, '')} {severity.upper()}")
+    with col2:
+        st.metric("Total Flags", red_flags.get("total_flags", 0))
+    
+    if red_flags.get("has_red_flags"):
+        flags_by_category = red_flags.get("flags_by_category", {})
+        for category, flags in flags_by_category.items():
+            if flags:
+                with st.expander(f"🚩 {category.title()} ({len(flags)} issues)"):
+                    for flag in flags[:5]:  # Show first 5
+                        st.warning(f"**{flag['keyword']}**")
+                        st.caption(flag.get('context', '')[:200])
+    else:
+        st.success("✅ No red flags detected!")
+    
+    # Positive Signals
+    st.write("### ✅ Positive Signals")
+    positive = analysis.get("positive_signals", {})
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        strength = positive.get("strength_level", "weak")
+        st.metric("Strength Level", strength.upper())
+    with col2:
+        st.metric("Total Signals", positive.get("total_signals", 0))
+    
+    if positive.get("has_positive_signals"):
+        signals_by_category = positive.get("signals_by_category", {})
+        for category, signals in signals_by_category.items():
+            if signals:
+                with st.expander(f"💚 {category.title()} ({len(signals)})"):
+                    for signal in signals[:5]:
+                        st.success(f"**{signal['keyword']}**")
+                        st.caption(signal.get('context', '')[:200])
+    
+    # Financial Metrics
+    st.write("### 💰 Financial Metrics")
+    financial = analysis.get("financial_metrics", {})
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Currency Values Found", financial.get("currency_values_found", 0))
+    with col2:
+        st.metric("Percentages Found", financial.get("percentages_found", 0))
+    with col3:
+        has_data = "✅" if financial.get("has_financial_data") else "❌"
+        st.metric("Has Financial Data", has_data)
+    
+    if financial.get("sample_values"):
+        with st.expander("� Sample Values"):
+            st.write(", ".join(financial.get("sample_values", [])[:10]))
+    
+    # Recommendation
+    st.write("### 🎯 Investment Recommendation")
+    recommendation = analysis.get("recommendation", {})
+    
+    rec_text = recommendation.get("recommendation", "N/A")
+    confidence = recommendation.get("confidence", "N/A")
+    score = recommendation.get("score", 0)
+    
+    # Color code the recommendation
+    rec_color = {
+        "Strong Buy": "🟢",
+        "Buy": "🟢",
+        "Hold": "🟡",
+        "Caution": "🟠",
+        "Avoid": "🔴"
+    }
+    
+    st.info(f"{rec_color.get(rec_text, '⚪')} **{rec_text}** (Confidence: {confidence}, Score: {score})")
+    st.caption(recommendation.get("reasoning", ""))
+
+
+def display_summary_analysis(analysis: dict):
+    """Display summary analysis"""
+    
+    st.write("### � Document Summary")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Type", analysis.get("document_type", "N/A"))
+    with col2:
+        st.metric("Words", f"{analysis.get('word_count', 0):,}")
+    with col3:
+        st.metric("Characters", f"{analysis.get('character_count', 0):,}")
+    with col4:
+        st.metric("Tables", analysis.get("table_count", 0))
+    
+    if analysis.get("preview"):
+        st.write("**Preview:**")
+        st.write(analysis.get("preview"))
+
+
+def display_red_flags_analysis(analysis: dict):
+    """Display red flags analysis"""
+    
+    st.write("### 🚨 Red Flags Detection")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        severity = analysis.get("severity_level", "low")
+        severity_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}
+        st.metric("Severity", f"{severity_emoji.get(severity, '')} {severity.upper()}")
+    with col2:
+        st.metric("Total Flags", analysis.get("total_flags", 0))
+    
+    if analysis.get("has_red_flags"):
+        flags_by_category = analysis.get("flags_by_category", {})
+        
+        for category, flags in flags_by_category.items():
+            if flags:
+                st.write(f"#### 🚩 {category.title()} Issues ({len(flags)})")
+                for idx, flag in enumerate(flags):
+                    with st.expander(f"{idx+1}. {flag['keyword']} - {flag.get('severity', 'low').upper()}"):
+                        st.write(flag.get('context', ''))
+    else:
+        st.success("✅ No red flags detected in this document!")
+
+
+def display_financial_analysis(analysis: dict):
+    """Display financial analysis"""
+    
+    st.write("### � Financial Analysis")
+    
+    metrics = analysis.get("metrics", {})
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Currency Values", metrics.get("currency_values_found", 0))
+    with col2:
+        st.metric("Percentages", metrics.get("percentages_found", 0))
+    with col3:
+        has_data = "✅" if metrics.get("has_financial_data") else "❌"
+        st.metric("Has Data", has_data)
+    
+    if metrics.get("sample_values"):
+        st.write("**Sample Currency Values:**")
+        st.write(", ".join(metrics.get("sample_values", [])[:20]))
+    
+    if metrics.get("sample_percentages"):
+        st.write("**Sample Percentages:**")
+        st.write(", ".join(metrics.get("sample_percentages", [])[:20]))
+    
+    # If Excel/CSV file
+    if analysis.get("has_financial_statements"):
+        st.write("**Financial Statements Detected:**")
+        for sheet in analysis.get("financial_sheets", []):
+            with st.expander(f"📊 {sheet['name']}"):
+                st.write(f"- Rows: {sheet['rows']}")
+                st.write(f"- Columns: {sheet['columns']}")
+                st.write(f"- Column Names: {', '.join(sheet['column_names'][:10])}")
 
 
 def show_modeling_page():

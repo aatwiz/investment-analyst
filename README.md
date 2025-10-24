@@ -31,7 +31,11 @@ Build a unified AI agent that accelerates deal sourcing, reduces manual effort, 
 investment-ai/
 ├── backend/                 # FastAPI backend
 │   ├── api/                # API endpoints
-│   ├── services/           # Business logic
+│   ├── services/           # Business logic (organized by capability)
+│   │   ├── document_analysis/    # Keyword-based analysis ✅
+│   │   ├── file_processing/      # Document extraction ✅
+│   │   ├── llm_agents/          # LLM-powered agents 🚧
+│   │   └── data_extraction/     # Specialized extraction
 │   ├── models/             # Data models
 │   ├── utils/              # Utility functions
 │   └── main.py             # FastAPI app entry
@@ -43,6 +47,11 @@ investment-ai/
 │   ├── uploads/            # Uploaded files
 │   ├── processed/          # Processed documents
 │   └── outputs/            # Generated reports
+├── docs/                   # Documentation
+│   ├── LLM_INTEGRATION_GUIDE.md
+│   ├── QUICK_START_LLM.md
+│   ├── ARCHITECTURE_DIAGRAM.md
+│   └── HANDOFF_SUMMARY.md
 ├── models/                 # AI/ML models
 ├── tests/                  # Test suite
 └── requirements.txt        # Python dependencies
@@ -81,11 +90,27 @@ Frontend will be available at: http://localhost:8501
 
 ## 📝 Development Roadmap
 
-- [x] Phase 1: Project setup with file upload capabilities
-- [ ] Phase 2: Document processing and extraction
-- [ ] Phase 3: AI-powered analysis and insights
-- [ ] Phase 4: Financial modeling
-- [ ] Phase 5: Memo and presentation generation
+- [x] **Phase 1**: Project setup with file upload capabilities ✅
+- [x] **Phase 2**: Document processing and extraction ✅
+  - PDF, DOCX, Excel, CSV, PowerPoint, TXT extraction
+  - Keyword-based analysis (100+ red flags & positive signals)
+  - Investment recommendation engine
+  - Complete Analysis UI with 4 display modes
+- [ ] **Phase 3**: LLM-powered analysis (🚧 Infrastructure ready)
+  - Pre-processing pipeline built
+  - Prompt generation complete
+  - Need: OpenAI API key + 10 lines of code
+  - See: `docs/QUICK_START_LLM.md`
+- [ ] **Phase 4**: Market & competitive analysis
+- [ ] **Phase 5**: Financial modeling
+- [ ] **Phase 6**: Memo and presentation generation
+
+## 📚 Documentation
+
+- 📖 **[LLM Integration Guide](docs/LLM_INTEGRATION_GUIDE.md)** - Complete implementation guide
+- ⚡ **[Quick Start LLM](docs/QUICK_START_LLM.md)** - Fast reference for tomorrow
+- 🏗️ **[Architecture Diagram](docs/ARCHITECTURE_DIAGRAM.md)** - Visual architecture
+- 📧 **[Handoff Summary](docs/HANDOFF_SUMMARY.md)** - Team handoff document
 
 ## 🤝 Contributing
 

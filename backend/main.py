@@ -12,7 +12,7 @@ import shutil
 from datetime import datetime
 import logging
 
-from api.routes import files, analysis, modeling, reports
+from api.routes import files, analysis, modeling, reports, llm_analysis
 from utils.config import settings
 from utils.logger import setup_logger
 
@@ -55,6 +55,7 @@ create_directories()
 # Include routers
 app.include_router(files.router, prefix="/api/v1/files", tags=["Files"])
 app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["Analysis"])
+app.include_router(llm_analysis.router, prefix="/api/v1/llm", tags=["LLM Analysis"])
 app.include_router(modeling.router, prefix="/api/v1/modeling", tags=["Modeling"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
 
