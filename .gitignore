@@ -1,0 +1,52 @@
+# --- Python basics ---
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# --- Virtual environments ---
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- VS Code / IDE stuff ---
+.vscode/
+.idea/
+*.code-workspace
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Logs & temp files ---
+*.log
+*.tmp
+*.bak
+*.swp
+
+# --- Environment variables ---
+.env
+.env.*
+*.secret
+*.key
+secrets.json
+config.json
+
+# --- Model / AI files ---
+*.ckpt
+*.pt
+*.bin
+*.h5
+
+# --- Data dumps or large files ---
+*.csv
+*.xlsx
+*.xls
+*.db
+*.sqlite3
