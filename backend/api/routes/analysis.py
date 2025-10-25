@@ -12,14 +12,14 @@ from sqlalchemy import select
 
 from utils.config import settings
 from utils.logger import setup_logger
-from services.document_analysis import DocumentAnalyzer
+from services.llm_agents import InvestmentAnalystAgent
 from config.database import get_db
 from models.document import Document
 from models.analysis import Analysis
 
 router = APIRouter()
 logger = setup_logger(__name__)
-analyzer = DocumentAnalyzer()
+analyzer = InvestmentAnalystAgent()  # Use LLM-powered agent instead of keyword matcher
 
 
 class AnalyzeRequest(BaseModel):
@@ -70,11 +70,16 @@ async def analyze_document(request: AnalyzeRequest, db: AsyncSession = Depends(g
             if not file_path.exists():
                 raise HTTPException(status_code=404, detail=f"File not found on disk: {document.file_path}")
         
-        # Analyze document
-        analysis_result = analyzer.analyze_document(file_path, request.analysis_type)
+        # Analyze document using LLM-powered agent
+        # Pass filename (not path) as the agent expects it
+        analysis_result = await analyzer.analyze_document(
+            filename=file_path.name,
+            focus_areas=None  # Could be extended to support specific focus areas
+        )
         
-        if not analysis_result.get("success"):
-            raise HTTPException(status_code=500, detail=analysis_result.get("error", "Analysis failed"))
+        # Extract LLM analysis and recommendation
+        llm_analysis = analysis_result.get("llm_analysis", {})
+        recommendation = llm_analysis.get("recommendation", {})
         
         # Save analysis to database if document exists in DB
         if document:
@@ -82,11 +87,11 @@ async def analyze_document(request: AnalyzeRequest, db: AsyncSession = Depends(g
                 analysis_record = Analysis(
                     document_id=document.id,
                     analysis_type=request.analysis_type,
-                    llm_model=analysis_result.get("model", "gpt-4o-mini"),
-                    result_data=analysis_result.get("analysis", {}),
-                    summary=str(analysis_result.get("analysis", {}).get("summary", ""))[:1000],
-                    token_usage=analysis_result.get("token_usage", 0),
-                    cost_usd=analysis_result.get("cost", 0.0),
+                    llm_model=analysis_result.get("model_used", "gpt-4o-mini"),
+                    result_data=llm_analysis,
+                    summary=llm_analysis.get("executive_summary", "")[:1000],
+                    token_usage=0,  # TODO: Track token usage from OpenAI response
+                    cost_usd=0.0,  # TODO: Calculate cost based on tokens
                     status="completed"
                 )
                 
@@ -116,7 +121,7 @@ async def analyze_document(request: AnalyzeRequest, db: AsyncSession = Depends(g
 @router.post("/analyze/batch")
 async def analyze_batch(request: BatchAnalyzeRequest):
     """
-    Analyze multiple documents
+    Analyze multiple documents using LLM agent
     
     Args:
         request: Batch analysis request with filenames and analysis type
@@ -125,24 +130,32 @@ async def analyze_batch(request: BatchAnalyzeRequest):
         Consolidated analysis results
     """
     try:
-        upload_path = Path(settings.UPLOAD_DIR)
-        file_paths = []
+        results = []
         
-        # Find all files
+        # Analyze each document
         for filename in request.filenames:
-            for fp in upload_path.rglob(f"*{filename}*"):
-                if fp.is_file():
-                    file_paths.append(fp)
-                    break
+            try:
+                analysis = await analyzer.analyze_document(filename, focus_areas=None)
+                results.append({
+                    "filename": filename,
+                    "success": True,
+                    "analysis": analysis
+                })
+            except Exception as e:
+                logger.error(f"Error analyzing {filename}: {str(e)}")
+                results.append({
+                    "filename": filename,
+                    "success": False,
+                    "error": str(e)
+                })
         
-        if not file_paths:
-            raise HTTPException(status_code=404, detail="No files found")
-        
-        # Analyze documents
-        result = analyzer.analyze_multiple_documents(file_paths, request.analysis_type)
-        
-        logger.info(f"Successfully analyzed {len(file_paths)} documents")
-        return result
+        logger.info(f"Successfully analyzed {len([r for r in results if r['success']])} of {len(request.filenames)} documents")
+        return {
+            "total": len(request.filenames),
+            "successful": len([r for r in results if r['success']]),
+            "failed": len([r for r in results if not r['success']]),
+            "results": results
+        }
         
     except HTTPException:
         raise
