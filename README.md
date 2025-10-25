@@ -31,11 +31,18 @@ Build a unified AI agent that accelerates deal sourcing, reduces manual effort, 
 investment-ai/
 ├── backend/                 # FastAPI backend
 │   ├── api/                # API endpoints
-│   ├── services/           # Business logic (organized by capability)
-│   │   ├── document_analysis/    # Keyword-based analysis ✅
-│   │   ├── file_processing/      # Document extraction ✅
-│   │   ├── llm_agents/          # LLM-powered agents 🚧
-│   │   └── data_extraction/     # Specialized extraction
+│   ├── services/           # Business logic (organized by feature)
+│   │   ├── document_analysis/       # Keyword-based analysis ✅
+│   │   ├── file_processing/         # Document extraction ✅
+│   │   ├── llm_agents/             # LLM-powered agents ✅
+│   │   ├── data_extraction/        # Specialized extraction 🚧
+│   │   ├── web_scraping/           # Deal sourcing scrapers 📦
+│   │   ├── deal_qualification/     # Deal scoring & profiling 📦
+│   │   ├── market_intelligence/    # Market & competitor analysis 📦
+│   │   ├── external_data/          # External API integrations 📦
+│   │   ├── financial_modeling/     # Financial projections 📦
+│   │   ├── content_generation/     # Memo & deck generation 📦
+│   │   └── template_management/    # Templates & branding 📦
 │   ├── models/             # Data models
 │   ├── utils/              # Utility functions
 │   └── main.py             # FastAPI app entry
@@ -48,6 +55,7 @@ investment-ai/
 │   ├── processed/          # Processed documents
 │   └── outputs/            # Generated reports
 ├── docs/                   # Documentation
+│   ├── PROJECT_STATUS_AND_ROADMAP.md  ⭐ START HERE
 │   ├── LLM_INTEGRATION_GUIDE.md
 │   ├── QUICK_START_LLM.md
 │   ├── ARCHITECTURE_DIAGRAM.md
@@ -56,6 +64,8 @@ investment-ai/
 ├── tests/                  # Test suite
 └── requirements.txt        # Python dependencies
 ```
+
+**Legend**: ✅ Complete | 🚧 In Progress | 📦 Placeholder
 
 ## 🚀 Quick Start
 
@@ -96,19 +106,29 @@ Frontend will be available at: http://localhost:8501
   - Keyword-based analysis (100+ red flags & positive signals)
   - Investment recommendation engine
   - Complete Analysis UI with 4 display modes
-- [ ] **Phase 3**: LLM-powered analysis (🚧 Infrastructure ready)
-  - Pre-processing pipeline built
-  - Prompt generation complete
-  - Need: OpenAI API key + 10 lines of code
-  - See: `docs/QUICK_START_LLM.md`
-- [ ] **Phase 4**: Market & competitive analysis
-- [ ] **Phase 5**: Financial modeling
-- [ ] **Phase 6**: Memo and presentation generation
+  - **LLM-powered analysis with OpenAI GPT-4o-mini** ⭐ NEW
+- [ ] **Phase 3**: AI-Powered Deal Sourcing (🚧 In Progress)
+  - Web scraping infrastructure
+  - Deal qualification engine
+  - Company profile builder
+- [ ] **Phase 4**: Market & Competitive Analysis (🚧 In Progress)
+  - Market sizing and trends
+  - Competitor tracking
+  - Sentiment analysis
+- [ ] **Phase 5**: Financial Modeling & Scenario Planning (🚧 In Progress)
+  - Projection model builder
+  - Scenario planning
+  - Valuation engine
+- [ ] **Phase 6**: Investment Memo & Presentation Generation (🚧 In Progress)
+  - Memo generation with LLM
+  - Pitch deck creation
+  - Template management
 
 ## 📚 Documentation
 
-- 📖 **[LLM Integration Guide](docs/LLM_INTEGRATION_GUIDE.md)** - Complete implementation guide
-- ⚡ **[Quick Start LLM](docs/QUICK_START_LLM.md)** - Fast reference for tomorrow
+- � **[Project Status & Roadmap](docs/PROJECT_STATUS_AND_ROADMAP.md)** ⭐ **START HERE** - Complete overview
+- �📖 **[LLM Integration Guide](docs/LLM_INTEGRATION_GUIDE.md)** - Implementation guide
+- ⚡ **[Quick Start LLM](docs/QUICK_START_LLM.md)** - Fast reference
 - 🏗️ **[Architecture Diagram](docs/ARCHITECTURE_DIAGRAM.md)** - Visual architecture
 - 📧 **[Handoff Summary](docs/HANDOFF_SUMMARY.md)** - Team handoff document
 
