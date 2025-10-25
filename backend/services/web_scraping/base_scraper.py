@@ -170,6 +170,7 @@ class BaseScraper(ABC):
         - employee_count: Number of employees
         - source: Platform source
         - source_url: URL where found
+        - source_article_title: Original article title (if from news source)
         - scraped_at: Timestamp
         """
         return {
@@ -187,6 +188,7 @@ class BaseScraper(ABC):
             'employee_count': raw_data.get('employee_count'),
             'source': self.get_platform_name(),
             'source_url': raw_data.get('source_url', ''),
+            'source_article_title': raw_data.get('source_article_title', ''),
             'scraped_at': datetime.utcnow().isoformat(),
             'raw_data': raw_data  # Keep original for reference
         }

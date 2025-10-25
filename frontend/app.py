@@ -305,13 +305,11 @@ def show_scrape_deals_tab():
     st.write("#### Configure Deal Scraping")
     
     # Platform selection
-    st.write("**Select Platforms to Scrape:**")
+    st.write("**Data Source:**")
     
-    st.write("**Select Data Source:**")
+    st.info("🚀 **TechCrunch** - Real funding announcements from curated tech journalism. Includes 8 major deals totaling $6.8B (Anthropic, Scale AI, Ramp, Perplexity AI, Brex, Vercel, Runway, Harvey)")
     
-    st.info("🚀 **TechCrunch** - Real funding announcements from curated tech journalism. Includes 8 major deals totaling $6.8B (Anthropic, Scale AI, Ramp, Perplexity AI, etc.)")
-    
-    techcrunch = st.checkbox("TechCrunch", value=True, disabled=True, help="Real funding data - currently the only source")
+    techcrunch = st.checkbox("TechCrunch (automatically selected)", value=True, disabled=True, help="Real funding data - currently the only source")
     
     # Collect selected platforms
     platforms = ["techcrunch"]  # Always use TechCrunch
@@ -432,7 +430,10 @@ def scrape_deals(platforms, industries, locations, stages, min_funding, qualify,
                         st.metric("Qualified Deals", summary.get("qualified_deals", 0))
                     with col4:
                         total_funding = summary.get("total_funding", 0)
-                        st.metric("Total Funding", f"${total_funding/1_000_000:.1f}M")
+                        if total_funding >= 1_000_000_000:
+                            st.metric("Total Funding", f"${total_funding/1_000_000_000:.1f}B")
+                        else:
+                            st.metric("Total Funding", f"${total_funding/1_000_000:.1f}M")
                     
                     # Top deals
                     deals = result.get("deals", [])
@@ -707,7 +708,16 @@ def display_deals_table(deals):
                     st.metric("Score", f"{score_color} {score:.0f}")
                 
                 source = deal_data.get("source", "Unknown")
-                st.caption(f"📍 {source}")
+                source_url = deal_data.get("source_url", "")
+                source_article = deal_data.get("source_article_title", "")
+                
+                if source_url:
+                    # Show clickable link to original article
+                    st.markdown(f"**Source:** [{source}]({source_url})")
+                    if source_article:
+                        st.caption(f"📰 {source_article[:50]}..." if len(source_article) > 50 else f"📰 {source_article}")
+                else:
+                    st.caption(f"📍 {source}")
             
             st.divider()
 
