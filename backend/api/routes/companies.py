@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from loguru import logger
 
 from config.database import get_db
-from backend.services.web_scraping.deal_sourcing_manager import DealSourcingManager
-from backend.services.deal_qualification.qualifier import DealQualifier
+from services.web_scraping.deal_sourcing_manager import DealSourcingManager
+from services.deal_qualification.qualifier import DealQualifier
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
