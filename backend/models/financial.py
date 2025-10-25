@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from backend.config.database import Base
+from config.database import Base
 
 
 class FinancialModel(Base):
@@ -63,9 +63,9 @@ class FinancialModel(Base):
     projections = relationship("FinancialProjection", back_populates="model", cascade="all, delete-orphan")
     
     __table_args__ = (
-        Index("idx_model_name", "model_name"),
+        Index("idx_financial_model_name", "model_name"),
         Index("idx_model_company", "company_name"),
-        Index("idx_model_type", "model_type"),
+        Index("idx_financial_model_type", "model_type"),
         Index("idx_model_year", "base_year"),
     )
     

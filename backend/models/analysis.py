@@ -20,7 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from backend.config.database import Base
+from config.database import Base
 
 
 class Analysis(Base):

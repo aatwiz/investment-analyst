@@ -1,7 +1,7 @@
 """
 File upload and management API endpoints
 """
-from fastapi import APIRouter, File, UploadFile, HTTPException, Form
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form, Depends
 from fastapi.responses import JSONResponse
 from typing import List, Optional
 import os
@@ -9,10 +9,14 @@ from pathlib import Path
 import shutil
 from datetime import datetime
 import uuid
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from utils.config import settings
 from utils.logger import setup_logger
 from services.file_processing import FileProcessor
+from config.database import get_db
+from models.document import Document
+from services.embeddings.embedding_service import embed_document_chunks
 
 router = APIRouter()
 logger = setup_logger(__name__)
@@ -23,18 +27,20 @@ file_processor = FileProcessor()
 async def upload_file(
     file: UploadFile = File(...),
     category: Optional[str] = Form(None),
-    description: Optional[str] = Form(None)
+    description: Optional[str] = Form(None),
+    db: AsyncSession = Depends(get_db)
 ):
     """
-    Upload a single file
+    Upload a single file and save to database with embeddings
     
     Args:
         file: File to upload
         category: Optional category (e.g., 'financial', 'legal', 'market')
         description: Optional file description
+        db: Database session
     
     Returns:
-        File metadata and upload status
+        File metadata, database ID, and upload status
     """
     try:
         # Validate file extension
@@ -59,7 +65,7 @@ async def upload_file(
         upload_path.mkdir(parents=True, exist_ok=True)
         file_path = upload_path / safe_filename
         
-        # Save file
+        # Save file to disk
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
@@ -74,11 +80,50 @@ async def upload_file(
                 detail=f"File size exceeds maximum allowed size of {settings.MAX_UPLOAD_SIZE_MB}MB"
             )
         
-        logger.info(f"File uploaded successfully: {safe_filename}")
+        # Extract text content from file
+        try:
+            extracted_text = file_processor.extract_text(str(file_path))
+        except Exception as e:
+            logger.warning(f"Could not extract text from {safe_filename}: {str(e)}")
+            extracted_text = ""
+        
+        # Create document record in database
+        document = Document(
+            filename=file.filename,
+            file_path=str(file_path),
+            file_type=file_ext,
+            file_size=file_size,
+            document_type=category or "general",
+            full_text=extracted_text,
+            metadata_={
+                "safe_filename": safe_filename,
+                "description": description,
+                "category": category
+            },
+            is_vectorized=False  # Will be set to True after embedding
+        )
+        
+        db.add(document)
+        await db.commit()
+        await db.refresh(document)
+        
+        # Generate embeddings in the background (non-blocking)
+        embedding_status = "pending"
+        try:
+            if extracted_text:
+                await embed_document_chunks(db, document.id)
+                embedding_status = "completed"
+                logger.info(f"Embeddings generated for document {document.id}")
+        except Exception as e:
+            logger.error(f"Error generating embeddings for {safe_filename}: {str(e)}")
+            embedding_status = "failed"
+        
+        logger.info(f"File uploaded and saved to database: {safe_filename} (ID: {document.id})")
         
         return {
             "success": True,
             "message": "File uploaded successfully",
+            "document_id": document.id,
             "file_id": file_id,
             "filename": file.filename,
             "safe_filename": safe_filename,
@@ -87,13 +132,18 @@ async def upload_file(
             "file_type": file_ext,
             "category": category,
             "description": description,
-            "uploaded_at": datetime.now().isoformat()
+            "text_extracted": bool(extracted_text),
+            "embedding_status": embedding_status,
+            "uploaded_at": document.upload_date.isoformat()
         }
         
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error uploading file: {str(e)}")
+        # Clean up file if database save failed
+        if 'file_path' in locals() and os.path.exists(file_path):
+            os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"Error uploading file: {str(e)}")
 
 

@@ -17,7 +17,7 @@ from sqlalchemy import (
     Text,
 )
 
-from backend.config.database import Base
+from config.database import Base
 
 
 class AIModel(Base):

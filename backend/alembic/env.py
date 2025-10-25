@@ -10,11 +10,15 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from project root
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+dotenv_path = os.path.join(project_root, '.env')
+load_dotenv(dotenv_path)
 
-# Add parent directory to path to import our models
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+# Add parent directories to path to import our models
+backend_dir = os.path.dirname(os.path.dirname(__file__))
+sys.path.insert(0, backend_dir)
+sys.path.insert(0, project_root)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -29,14 +33,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models for autogenerate support
-from backend.models import Base
-from backend.models.document import Document, DocumentChunk, DocumentEmbedding
-from backend.models.analysis import Analysis, AnalysisResult
-from backend.models.company import Company, CompanyMetric, CompanyFunding
-from backend.models.market import MarketData, CompetitorAnalysis, MarketTrend
-from backend.models.financial import FinancialModel, FinancialProjection
-from backend.models.memo import Memo, MemoSection
-from backend.models.ai_model import AIModel
+# Import through models/__init__.py to get all models at once
+import models
+from models import Base
 
 # this is the target_metadata for 'autogenerate' support
 target_metadata = Base.metadata

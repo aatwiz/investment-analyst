@@ -8,6 +8,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -16,7 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from backend.config.database import Base
+from config.database import Base
 
 
 class Memo(Base):
