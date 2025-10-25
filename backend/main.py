@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from api.routes import files, analysis, modeling, reports, llm_analysis, search, companies
+from api.routes import files, analysis, modeling, reports, llm_analysis, search, companies, market
 from utils.config import settings
 from utils.logger import setup_logger
 
@@ -64,6 +64,7 @@ app.include_router(search.router, prefix="/api/v1/search", tags=["Semantic Searc
 app.include_router(modeling.router, prefix="/api/v1/modeling", tags=["Modeling"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
 app.include_router(companies.router, prefix="/api/v1", tags=["Companies & Deals"])
+app.include_router(market.router, prefix="/api/v1/market", tags=["Market Research"])
 
 
 @app.get("/")

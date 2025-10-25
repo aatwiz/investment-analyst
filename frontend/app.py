@@ -140,7 +140,7 @@ def main():
         
         page = st.radio(
             "Go to",
-            ["🏠 Home", "� Deal Sourcing", "�📤 Upload Documents", "📁 Document Library", "📊 Analysis", "💰 Financial Modeling", "📝 Generate Reports"],
+            ["🏠 Home", "� Deal Sourcing", "🌐 Market Intelligence", "�📤 Upload Documents", "📁 Document Library", "📊 Analysis", "💰 Financial Modeling", "📝 Generate Reports"],
             label_visibility="collapsed"
         )
         
@@ -171,6 +171,8 @@ def main():
         show_home_page()
     elif page == "� Deal Sourcing":
         show_deal_sourcing_page()
+    elif page == "🌐 Market Intelligence":
+        show_market_intelligence_page()
     elif page == "�📤 Upload Documents":
         show_upload_page()
     elif page == "📁 Document Library":
@@ -798,6 +800,328 @@ def display_qualified_deals_table(deals):
             # Links
             if deal_data.get("source_url"):
                 st.write(f"[🔗 View on {deal_data.get('source', 'Platform')}]({deal_data['source_url']})")
+
+
+def show_market_intelligence_page():
+    """Market Intelligence & Competitive Analysis page"""
+    
+    st.write("# 🌐 Market Intelligence & Competitive Analysis")
+    st.write("Generate comprehensive market research and competitive insights")
+    
+    st.write("")
+    
+    # Main tabs
+    tab1, tab2, tab3 = st.tabs(["📊 Market Analysis", "🏢 Competitor Analysis", "📈 Industry Trends"])
+    
+    with tab1:
+        show_market_analysis_tab()
+    
+    with tab2:
+        show_competitor_analysis_tab()
+    
+    with tab3:
+        show_industry_trends_tab()
+
+
+def show_market_analysis_tab():
+    """Market analysis tab"""
+    st.write("### 📊 Comprehensive Market Analysis")
+    st.write("Generate detailed market research for companies and industries")
+    
+    st.write("")
+    
+    # Input form
+    with st.form("market_analysis_form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            company_name = st.text_input(
+                "Company Name",
+                placeholder="e.g., Anthropic, Stripe, SpaceX",
+                help="Enter the company name to analyze"
+            )
+            
+            industry = st.text_input(
+                "Industry/Sector",
+                placeholder="e.g., AI & Machine Learning, Fintech, Aerospace",
+                help="Specify the industry or sector"
+            )
+        
+        with col2:
+            company_desc = st.text_area(
+                "Company Description (Optional)",
+                placeholder="Brief description of the company...",
+                help="Provide context to improve analysis quality"
+            )
+        
+        col3, col4, col5 = st.columns(3)
+        
+        with col3:
+            include_competitors = st.checkbox("Include Competitive Analysis", value=True)
+        
+        with col4:
+            include_trends = st.checkbox("Include Industry Trends", value=True)
+        
+        with col5:
+            include_regulatory = st.checkbox("Include Regulatory Analysis", value=True)
+        
+        submitted = st.form_submit_button("🔍 Generate Market Analysis", type="primary")
+    
+    if submitted:
+        if not company_name or not industry:
+            st.error("⚠️ Please provide both company name and industry")
+            return
+        
+        with st.spinner(f"🔎 Analyzing market for {company_name}..."):
+            try:
+                response = requests.post(
+                    f"{API_BASE_URL}/market/analyze",
+                    json={
+                        "company_name": company_name,
+                        "industry": industry,
+                        "description": company_desc if company_desc else None,
+                        "include_competitors": include_competitors,
+                        "include_trends": include_trends,
+                        "include_regulatory": include_regulatory
+                    },
+                    timeout=120  # Market research can take time
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    st.success(f"✅ Market analysis completed for {company_name}")
+                    
+                    # Market Overview
+                    st.write("---")
+                    st.write("### 📈 Market Overview")
+                    
+                    # Key Metrics
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        market_size = data['metrics']['market_size']
+                        if market_size >= 1_000_000_000:
+                            st.metric("Market Size", f"${market_size/1_000_000_000:.1f}B")
+                        else:
+                            st.metric("Market Size", f"${market_size/1_000_000:.1f}M")
+                    
+                    with col2:
+                        st.metric("Growth Rate", f"{data['metrics']['growth_rate']:.1f}%")
+                    
+                    with col3:
+                        st.metric("Market Position", f"#{data['metrics']['market_position']}")
+                    
+                    with col4:
+                        st.metric("YoY Growth", f"{data['metrics']['yoy_growth']:.1f}%")
+                    
+                    # Market Overview Text
+                    st.write("")
+                    st.info(data['market_overview'])
+                    
+                    # Trends
+                    if include_trends and data.get('trends'):
+                        st.write("---")
+                        st.write("### 📊 Key Trends")
+                        for trend in data['trends']:
+                            st.write(f"• {trend}")
+                    
+                    # Competitive Position
+                    if include_competitors:
+                        st.write("---")
+                        st.write("### 🏆 Competitive Position")
+                        
+                        # Competitor Market Shares
+                        if data['metrics'].get('market_shares'):
+                            st.write("**Market Share Distribution:**")
+                            
+                            import pandas as pd
+                            shares_df = pd.DataFrame([
+                                {"Company": company, "Market Share": f"{share:.1f}%"}
+                                for company, share in data['metrics']['market_shares'].items()
+                            ])
+                            st.dataframe(shares_df, use_container_width=True, hide_index=True)
+                        
+                        st.write("")
+                        st.write("**Competitive Analysis:**")
+                        st.write(data['competitive_position'])
+                        
+                        if data.get('competitors'):
+                            st.write("**Key Competitors:**")
+                            for competitor in data['competitors']:
+                                st.write(f"• {competitor}")
+                    
+                    # Opportunities & Threats
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write("---")
+                        st.write("### ✅ Opportunities")
+                        for opp in data['opportunities']:
+                            st.write(f"• {opp}")
+                    
+                    with col2:
+                        st.write("---")
+                        st.write("### ⚠️ Threats")
+                        for threat in data['threats']:
+                            st.write(f"• {threat}")
+                    
+                    # Key Drivers
+                    st.write("---")
+                    st.write("### 🚀 Key Growth Drivers")
+                    for driver in data['key_drivers']:
+                        st.write(f"• {driver}")
+                    
+                    # Regulatory
+                    if include_regulatory:
+                        st.write("---")
+                        st.write("### ⚖️ Regulatory Environment")
+                        st.write(data['regulatory_environment'])
+                    
+                    # Full Report
+                    if data.get('report_text'):
+                        st.write("---")
+                        with st.expander("📄 View Full Report"):
+                            st.markdown(data['report_text'])
+                    
+                else:
+                    st.error(f"Failed to generate analysis: {response.text}")
+            
+            except requests.Timeout:
+                st.error("⏱️ Request timed out. Market research can take time - please try again.")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+
+
+def show_competitor_analysis_tab():
+    """Competitor analysis tab"""
+    st.write("### 🏢 Competitor Analysis")
+    st.write("Identify and analyze key competitors in your market")
+    
+    st.write("")
+    
+    with st.form("competitor_form"):
+        company_name = st.text_input(
+            "Company Name",
+            placeholder="e.g., Stripe, Square, Adyen",
+            help="Enter the company to analyze"
+        )
+        
+        industry = st.text_input(
+            "Industry",
+            placeholder="e.g., Payments & Fintech",
+            help="Specify the industry"
+        )
+        
+        submitted = st.form_submit_button("🔍 Analyze Competitors", type="primary")
+    
+    if submitted:
+        if not company_name or not industry:
+            st.error("⚠️ Please provide both company name and industry")
+            return
+        
+        with st.spinner(f"🔎 Analyzing competitors for {company_name}..."):
+            try:
+                response = requests.post(
+                    f"{API_BASE_URL}/market/competitors",
+                    json={
+                        "company_name": company_name,
+                        "industry": industry
+                    },
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    st.success(f"✅ Competitor analysis completed")
+                    
+                    st.write("---")
+                    
+                    # Market Shares Table
+                    st.write("### 📊 Market Share Distribution")
+                    
+                    import pandas as pd
+                    df = pd.DataFrame([
+                        {"Competitor": comp, "Market Share": f"{share:.1f}%"}
+                        for comp, share in data['competitors'].items()
+                    ])
+                    
+                    # Sort by market share
+                    df = df.sort_values("Market Share", ascending=False)
+                    
+                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    
+                    # Competitive Position
+                    st.write("---")
+                    st.write("### 🏆 Competitive Position Analysis")
+                    st.info(data['competitive_position'])
+                
+                else:
+                    st.error(f"Failed to analyze competitors: {response.text}")
+            
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+
+
+def show_industry_trends_tab():
+    """Industry trends tab"""
+    st.write("### 📈 Industry Trends Analysis")
+    st.write("Discover current trends and market dynamics")
+    
+    st.write("")
+    
+    with st.form("trends_form"):
+        industry = st.text_input(
+            "Industry/Sector",
+            placeholder="e.g., Fintech, AI, Healthcare",
+            help="Enter the industry to analyze"
+        )
+        
+        count = st.slider(
+            "Number of Trends",
+            min_value=3,
+            max_value=15,
+            value=5,
+            help="How many trends to retrieve"
+        )
+        
+        submitted = st.form_submit_button("🔍 Get Industry Trends", type="primary")
+    
+    if submitted:
+        if not industry:
+            st.error("⚠️ Please provide an industry")
+            return
+        
+        with st.spinner(f"🔎 Analyzing trends in {industry}..."):
+            try:
+                response = requests.post(
+                    f"{API_BASE_URL}/market/trends",
+                    json={
+                        "industry": industry,
+                        "count": count
+                    },
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    st.success(f"✅ Found {len(data['trends'])} key trends in {industry}")
+                    
+                    st.write("---")
+                    st.write(f"### 🔥 Top Trends in {industry}")
+                    
+                    for i, trend in enumerate(data['trends'], 1):
+                        with st.container():
+                            st.write(f"**{i}. {trend}**")
+                            st.write("")
+                
+                else:
+                    st.error(f"Failed to fetch trends: {response.text}")
+            
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
 
 
 def show_upload_page():
