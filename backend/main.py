@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from api.routes import files, analysis, modeling, reports, llm_analysis, search
+from api.routes import files, analysis, modeling, reports, llm_analysis, search, companies
 from utils.config import settings
 from utils.logger import setup_logger
 
@@ -63,6 +63,7 @@ app.include_router(llm_analysis.router, prefix="/api/v1/llm", tags=["LLM Analysi
 app.include_router(search.router, prefix="/api/v1/search", tags=["Semantic Search"])
 app.include_router(modeling.router, prefix="/api/v1/modeling", tags=["Modeling"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
+app.include_router(companies.router, prefix="/api/v1", tags=["Companies & Deals"])
 
 
 @app.get("/")
