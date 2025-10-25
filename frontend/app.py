@@ -32,13 +32,17 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         margin-bottom: 2rem;
     }
-    .upload-box {
+    .upload-section {
         border: 2px dashed #667eea;
-        border-radius: 10px;
-        padding: 2rem;
-        text-align: center;
-        background-color: #f8f9fa;
-        color: #333333;
+        border-radius: 12px;
+        padding: 2.5rem;
+        margin: 1.5rem 0;
+        background: transparent;
+        transition: all 0.3s ease;
+    }
+    .upload-section:hover {
+        border-color: #764ba2;
+        background: rgba(102, 126, 234, 0.03);
     }
     .feature-card {
         background: #f8f9fa;
@@ -802,6 +806,8 @@ def show_upload_page():
     st.write("### 📤 Upload Documents")
     st.write("Upload investment-related documents for analysis")
     
+    st.write("")  # Spacing
+    
     # Category selection
     col1, col2 = st.columns([2, 1])
     
@@ -824,22 +830,27 @@ def show_upload_page():
         "Other": "other"
     }
     
-    # File uploader
-    st.markdown('<div class="upload-box">', unsafe_allow_html=True)
+    st.write("")  # Spacing
+    
+    # File uploader - clean design without wrapper box
     uploaded_files = st.file_uploader(
-        "Choose files to upload",
+        "📁 Choose files to upload",
         type=['pdf', 'docx', 'doc', 'xlsx', 'xls', 'csv', 'txt', 'pptx', 'ppt', 'jpg', 'jpeg', 'png'],
         accept_multiple_files=True,
-        help="Supported formats: PDF, DOCX, XLSX, PPTX, CSV, TXT, Images"
+        help="Drag and drop files here or click to browse\n\nSupported: PDF, DOCX, XLSX, PPTX, CSV, TXT, Images (up to 100MB per file)",
+        label_visibility="visible"
     )
-    st.markdown('</div>', unsafe_allow_html=True)
     
     if uploaded_files:
-        st.write(f"**{len(uploaded_files)} file(s) selected:**")
-        for file in uploaded_files:
-            file_size = len(file.getvalue()) / (1024 * 1024)  # Convert to MB
-            st.write(f"- {file.name} ({file_size:.2f} MB)")
+        st.write("")  # Spacing
+        st.info(f"📋 **{len(uploaded_files)} file(s) selected**")
         
+        # Show files in a clean format
+        for idx, file in enumerate(uploaded_files, 1):
+            file_size = len(file.getvalue()) / (1024 * 1024)  # Convert to MB
+            st.write(f"{idx}. `{file.name}` - {file_size:.2f} MB")
+        
+        st.write("")  # Spacing
         col1, col2, col3 = st.columns([1, 1, 3])
         
         with col1:
