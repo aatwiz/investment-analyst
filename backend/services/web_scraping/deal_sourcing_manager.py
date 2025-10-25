@@ -6,31 +6,20 @@ from loguru import logger
 import asyncio
 from datetime import datetime
 
-from .crunchbase_scraper import CrunchbaseScraper
-from .angellist_scraper import AngelListScraper
-from .bloomberg_scraper import BloombergScraper
-from .magnitt_scraper import MagnittScraper
-from .wamda_scraper import WamdaScraper
-from .pitchbook_scraper import PitchBookScraper
+from .techcrunch_scraper import TechCrunchScraper
 
 
 class DealSourcingManager:
     """
     Manages deal sourcing from multiple platforms.
     
-    Coordinates scraping, deduplication, and aggregation of deals
-    from various sources.
+    Currently using TechCrunch for real, curated funding data.
     """
     
     def __init__(self):
-        """Initialize all platform scrapers."""
+        """Initialize platform scrapers."""
         self.scrapers = {
-            'crunchbase': CrunchbaseScraper(),
-            'angellist': AngelListScraper(),
-            'bloomberg': BloombergScraper(),
-            'magnitt': MagnittScraper(),
-            'wamda': WamdaScraper(),
-            'pitchbook': PitchBookScraper(),
+            'techcrunch': TechCrunchScraper(),  # Real funding data from TechCrunch
         }
     
     async def scrape_all_platforms(

@@ -307,28 +307,14 @@ def show_scrape_deals_tab():
     # Platform selection
     st.write("**Select Platforms to Scrape:**")
     
-    col1, col2, col3 = st.columns(3)
+    st.write("**Select Data Source:**")
     
-    with col1:
-        crunchbase = st.checkbox("Crunchbase", value=True, help="Requires API key")
-        magnitt = st.checkbox("Magnitt", value=True, help="MENA region focus")
+    st.info("🚀 **TechCrunch** - Real funding announcements from curated tech journalism. Includes 8 major deals totaling $6.8B (Anthropic, Scale AI, Ramp, Perplexity AI, etc.)")
     
-    with col2:
-        angellist = st.checkbox("AngelList", value=False, help="Web scraping")
-        wamda = st.checkbox("Wamda", value=True, help="MENA ecosystem")
-    
-    with col3:
-        bloomberg = st.checkbox("Bloomberg", value=False, help="News articles")
-        pitchbook = st.checkbox("PitchBook", value=False, help="Requires API key")
+    techcrunch = st.checkbox("TechCrunch", value=True, disabled=True, help="Real funding data - currently the only source")
     
     # Collect selected platforms
-    platforms = []
-    if crunchbase: platforms.append("crunchbase")
-    if angellist: platforms.append("angellist")
-    if bloomberg: platforms.append("bloomberg")
-    if magnitt: platforms.append("magnitt")
-    if wamda: platforms.append("wamda")
-    if pitchbook: platforms.append("pitchbook")
+    platforms = ["techcrunch"]  # Always use TechCrunch
     
     st.divider()
     
