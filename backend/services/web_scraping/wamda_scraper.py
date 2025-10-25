@@ -210,21 +210,21 @@ class WamdaScraper(BaseScraper):
         """Check if deal matches filter criteria."""
         
         # Country filter
-        if 'countries' in filters:
+        if 'countries' in filters and filters['countries']:
             location = deal.get('location', '').lower()
             if not any(country.lower() in location for country in filters['countries']):
                 return False
         
         # Industry filter (check in description)
-        if 'industries' in filters:
+        if 'industries' in filters and filters['industries']:
             text = f"{deal.get('description', '')} {deal.get('name', '')}".lower()
             if not any(industry.lower() in text for industry in filters['industries']):
                 return False
         
         # Min funding filter
-        if 'min_funding' in filters:
+        if 'min_funding' in filters and filters['min_funding']:
             funding = deal.get('funding_amount')
-            if not funding or funding < filters['min_funding']:
+            if funding is None or funding < filters['min_funding']:
                 return False
         
         return True

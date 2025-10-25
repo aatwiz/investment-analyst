@@ -338,7 +338,7 @@ class DealSourcingManager:
             }
         
         # Calculate statistics
-        total_funding = sum(d.get('funding_amount', 0) for d in deals)
+        total_funding = sum(d.get('funding_amount', 0) or 0 for d in deals)
         deals_with_funding = [d for d in deals if d.get('funding_amount')]
         avg_funding = total_funding / len(deals_with_funding) if deals_with_funding else 0
         

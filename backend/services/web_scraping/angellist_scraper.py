@@ -250,21 +250,27 @@ class AngelListScraper(BaseScraper):
         """Check if deal matches filter criteria."""
         
         # Location filter
-        if 'locations' in filters:
+        if 'locations' in filters and filters['locations']:
             location = deal.get('location', '').lower()
             if not any(loc.lower() in location for loc in filters['locations']):
                 return False
         
         # Market/industry filter
-        if 'markets' in filters:
+        if 'markets' in filters and filters['markets']:
             industry = deal.get('industry', '').lower()
             if not any(market.lower() in industry for market in filters['markets']):
                 return False
         
+        # Industry filter (alternative key)
+        if 'industries' in filters and filters['industries']:
+            industry = deal.get('industry', '').lower()
+            if not any(ind.lower() in industry for ind in filters['industries']):
+                return False
+        
         # Min funding filter
-        if 'min_funding' in filters:
+        if 'min_funding' in filters and filters['min_funding']:
             funding = deal.get('total_funding')
-            if not funding or funding < filters['min_funding']:
+            if funding is None or funding < filters['min_funding']:
                 return False
         
         return True

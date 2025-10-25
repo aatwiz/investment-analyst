@@ -161,24 +161,24 @@ class MagnittScraper(BaseScraper):
         """Check if deal matches filter criteria."""
         
         # Country filter
-        if 'countries' in filters:
+        if 'countries' in filters and filters['countries']:
             if not any(country.lower() in deal.get('location', '').lower() for country in filters['countries']):
                 return False
         
         # Industry filter
-        if 'industries' in filters:
+        if 'industries' in filters and filters['industries']:
             if not any(industry.lower() in deal.get('industry', '').lower() for industry in filters['industries']):
                 return False
         
         # Stage filter
-        if 'stages' in filters:
+        if 'stages' in filters and filters['stages']:
             if not any(stage.lower() in deal.get('stage', '').lower() for stage in filters['stages']):
                 return False
         
         # Min funding filter
-        if 'min_funding' in filters:
+        if 'min_funding' in filters and filters['min_funding']:
             funding = deal.get('funding_amount')
-            if not funding or funding < filters['min_funding']:
+            if funding is None or funding < filters['min_funding']:
                 return False
         
         return True
