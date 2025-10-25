@@ -47,37 +47,46 @@ class MagnittScraper(BaseScraper):
         filters = filters or {}
         deals = []
         
-        try:
-            # Magnitt funding page
-            funding_url = f"{self.base_url}/listings"
-            
-            html = await self._fetch_page(funding_url)
-            if not html:
-                return deals
-            
-            soup = self._parse_html(html)
-            
-            # Find funding announcements
-            # Note: Structure may change - this is a template
-            funding_cards = soup.find_all('div', class_=re.compile(r'(listing|fund|deal).*card', re.I))
-            
-            for card in funding_cards:
-                try:
-                    deal = self._parse_magnitt_card(card)
-                    
-                    # Apply filters
-                    if self._matches_filters(deal, filters):
-                        deals.append(self._normalize_deal(deal))
-                
-                except Exception as e:
-                    logger.warning(f"Error parsing Magnitt card: {e}")
-                    continue
-            
-            logger.info(f"Scraped {len(deals)} deals from Magnitt")
-            
-        except Exception as e:
-            logger.error(f"Error scraping Magnitt: {e}")
+        # TEMPORARY: Return mock data for testing UI
+        # TODO: Implement real scraping after inspecting actual HTML structure
+        logger.warning("Using mock data - real scraping not yet implemented")
         
+        mock_deals = [
+            {
+                'name': 'TechStart MENA',
+                'description': 'E-commerce platform connecting regional merchants',
+                'industry': 'E-commerce',
+                'stage': 'Series A',
+                'location': 'Dubai, UAE',
+                'funding_amount': 2500000,
+                'source_url': f'{self.base_url}/companies/techstart-mena'
+            },
+            {
+                'name': 'FinFlow Arabia',
+                'description': 'Digital payments and financial services',
+                'industry': 'Fintech',
+                'stage': 'Seed',
+                'location': 'Riyadh, Saudi Arabia',
+                'funding_amount': 1200000,
+                'source_url': f'{self.base_url}/companies/finflow-arabia'
+            },
+            {
+                'name': 'HealthHub Egypt',
+                'description': 'Telemedicine platform for MENA region',
+                'industry': 'Healthcare',
+                'stage': 'Series A',
+                'location': 'Cairo, Egypt',
+                'funding_amount': 3500000,
+                'source_url': f'{self.base_url}/companies/healthhub-egypt'
+            }
+        ]
+        
+        # Apply filters to mock data
+        for deal in mock_deals:
+            if self._matches_filters(deal, filters):
+                deals.append(self._normalize_deal(deal))
+        
+        logger.info(f"Scraped {len(deals)} deals from Magnitt (mock data)")
         return deals
     
     def _parse_magnitt_card(self, card) -> Dict[str, Any]:

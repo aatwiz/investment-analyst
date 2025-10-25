@@ -50,51 +50,52 @@ class AngelListScraper(BaseScraper):
         filters = filters or {}
         deals = []
         
-        try:
-            # Build search URL
-            search_url = self._build_search_url(filters)
-            
-            html = await self._fetch_page(search_url)
-            if not html:
-                return deals
-            
-            soup = self._parse_html(html)
-            
-            # Try to find JSON data embedded in page
-            script_tags = soup.find_all('script', type='application/json')
-            for script in script_tags:
-                try:
-                    data = json.loads(script.string)
-                    # Look for startup data in the JSON
-                    startups = self._extract_startups_from_json(data)
-                    if startups:
-                        for startup in startups:
-                            deal = self._parse_angellist_startup(startup)
-                            if deal and self._matches_filters(deal, filters):
-                                deals.append(self._normalize_deal(deal))
-                except:
-                    continue
-            
-            # Fallback: Parse HTML directly
-            if not deals:
-                startup_cards = soup.find_all(['div', 'article'], attrs={'data-test': re.compile(r'startup', re.I)})
-                if not startup_cards:
-                    startup_cards = soup.find_all('div', class_=re.compile(r'startup.*card', re.I))
-                
-                for card in startup_cards[:20]:  # Limit to avoid rate limiting
-                    try:
-                        deal = self._parse_html_card(card)
-                        if deal and self._matches_filters(deal, filters):
-                            deals.append(self._normalize_deal(deal))
-                    except Exception as e:
-                        logger.warning(f"Error parsing AngelList card: {e}")
-                        continue
-            
-            logger.info(f"Scraped {len(deals)} deals from AngelList")
-            
-        except Exception as e:
-            logger.error(f"Error scraping AngelList: {e}")
+        # TEMPORARY: Return mock data for testing UI
+        # TODO: AngelList requires authentication for API access
+        logger.warning("Using mock data - real scraping requires API access")
         
+        mock_deals = [
+            {
+                'name': 'PayFlow AI',
+                'description': 'AI-powered payment processing platform',
+                'website': 'https://payflow.ai',
+                'location': 'San Francisco, CA',
+                'industry': 'Fintech, AI',
+                'stage': 'Series A',
+                'total_funding': 5000000,
+                'employee_count': '15',
+                'source_url': f'{self.base_url}/company/payflow-ai'
+            },
+            {
+                'name': 'CloudScale',
+                'description': 'Infrastructure automation and scaling',
+                'website': 'https://cloudscale.io',
+                'location': 'New York, NY',
+                'industry': 'DevOps, Cloud',
+                'stage': 'Seed',
+                'total_funding': 2000000,
+                'employee_count': '8',
+                'source_url': f'{self.base_url}/company/cloudscale'
+            },
+            {
+                'name': 'DataViz Pro',
+                'description': 'Real-time data visualization platform',
+                'website': 'https://dataviz.pro',
+                'location': 'Austin, TX',
+                'industry': 'Data Analytics, SaaS',
+                'stage': 'Series A',
+                'total_funding': 4500000,
+                'employee_count': '20',
+                'source_url': f'{self.base_url}/company/dataviz-pro'
+            }
+        ]
+        
+        # Apply filters
+        for deal in mock_deals:
+            if self._matches_filters(deal, filters):
+                deals.append(self._normalize_deal(deal))
+        
+        logger.info(f"Scraped {len(deals)} deals from AngelList (mock data)")
         return deals
     
     def _build_search_url(self, filters: Dict) -> str:
