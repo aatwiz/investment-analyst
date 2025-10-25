@@ -51,6 +51,10 @@ pydantic-settings==2.1.0
 sqlalchemy==2.0.25
 psycopg2-binary==2.9.9
 pymongo==4.6.1
+alembic==1.13.1
+pgvector==0.2.5
+asyncpg==0.29.0
+greenlet==3.0.3
 
 # Testing
 pytest==7.4.4
