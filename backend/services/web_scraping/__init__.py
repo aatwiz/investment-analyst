@@ -2,21 +2,25 @@
 Web Scraping Services - Feature 1: AI-Powered Deal Sourcing
 
 This module handles web scraping from various sources:
-- Accelerators (Y Combinator, TechStars, 500 Startups)
 - Funding platforms (Crunchbase, AngelList, PitchBook)
-- News sources for funding announcements
+- MENA platforms (Magnitt, Wamda)
+- News sources (Bloomberg)
 """
 
-from .scraper_base import BaseScraper
-from .accelerator_scrapers import YCombinatorScraper, TechStarsScraper
-from .funding_platform_scrapers import CrunchbaseScraper, AngelListScraper
-from .news_scrapers import NewsAggregator
+from .base_scraper import BaseScraper
+from .crunchbase_scraper import CrunchbaseScraper
+from .angellist_scraper import AngelListScraper
+from .bloomberg_scraper import BloombergScraper
+from .magnitt_scraper import MagnittScraper
+from .wamda_scraper import WamdaScraper
+from .pitchbook_scraper import PitchBookScraper
 
 __all__ = [
     'BaseScraper',
-    'YCombinatorScraper',
-    'TechStarsScraper',
     'CrunchbaseScraper',
     'AngelListScraper',
-    'NewsAggregator'
+    'BloombergScraper',
+    'MagnittScraper',
+    'WamdaScraper',
+    'PitchBookScraper',
 ]
