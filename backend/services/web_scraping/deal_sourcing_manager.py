@@ -291,11 +291,11 @@ class DealSourcingManager:
         
         # Min funding
         if 'min_funding' in filters:
-            filtered = [d for d in filtered if d.get('funding_amount', 0) >= filters['min_funding']]
+            filtered = [d for d in filtered if (d.get('funding_amount') or 0) >= filters['min_funding']]
         
         # Max funding
         if 'max_funding' in filters:
-            filtered = [d for d in filtered if d.get('funding_amount', float('inf')) <= filters['max_funding']]
+            filtered = [d for d in filtered if (d.get('funding_amount') or float('inf')) <= filters['max_funding']]
         
         # Industries
         if 'industries' in filters:
