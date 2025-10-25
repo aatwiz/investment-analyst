@@ -290,7 +290,7 @@ def show_deal_sourcing_page():
     st.write("Automatically discover and qualify investment opportunities from multiple platforms")
     
     # Tabs for different functions
-    tab1, tab2, tab3, tab4 = st.tabs(["🔎 Scrape Deals", "📋 Deal Pipeline", "🎯 Qualified Deals", "📊 Statistics"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔎 Scrape Deals", "📋 Deal Pipeline", "🎯 Qualified Deals", "📊 Statistics", "📄 Daily Report"])
     
     with tab1:
         show_scrape_deals_tab()
@@ -303,6 +303,9 @@ def show_deal_sourcing_page():
     
     with tab4:
         show_deal_stats_tab()
+    
+    with tab5:
+        show_daily_report_tab()
 
 
 def show_scrape_deals_tab():
@@ -610,6 +613,287 @@ def show_deal_stats_tab():
     
     if st.button("📊 Refresh Stats", use_container_width=True):
         fetch_deal_stats()
+
+
+def show_daily_report_tab():
+    """Tab for generating daily potential deals reports"""
+    
+    st.write("#### 📄 Daily Potential Deals Report")
+    st.write("Generate a comprehensive report of investment opportunities matching your criteria")
+    
+    st.write("")
+    
+    # Criteria Form
+    with st.form("report_criteria_form"):
+        st.write("**Report Criteria:**")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Sectors
+            sectors = st.multiselect(
+                "Target Sectors",
+                ["Fintech", "ClimateTech", "Enterprise SaaS", "AI & Machine Learning", 
+                 "Healthcare", "AgriTech", "Cybersecurity", "E-commerce", "EdTech", "PropTech"],
+                default=["Fintech", "ClimateTech", "Enterprise SaaS"],
+                help="Industries to focus on"
+            )
+            
+            # Stages
+            stages = st.multiselect(
+                "Investment Stages",
+                ["Pre-Seed", "Seed", "Series A", "Series B", "Series C", "Growth"],
+                default=["Seed", "Series A", "Series B"],
+                help="Funding stages to include"
+            )
+            
+            # Revenue Range
+            st.write("**Revenue Range:**")
+            rev_col1, rev_col2 = st.columns(2)
+            with rev_col1:
+                min_revenue = st.number_input(
+                    "Min Revenue ($)",
+                    min_value=0,
+                    value=500_000,
+                    step=100_000,
+                    format="%d"
+                )
+            with rev_col2:
+                max_revenue = st.number_input(
+                    "Max Revenue ($)",
+                    min_value=0,
+                    value=10_000_000,
+                    step=1_000_000,
+                    format="%d"
+                )
+        
+        with col2:
+            # Geographies
+            geographies = st.multiselect(
+                "Target Geographies",
+                ["North America", "Europe", "Asia", "Latin America", "Middle East", "Africa"],
+                default=["North America", "Europe"],
+                help="Geographic regions to focus on"
+            )
+            
+            # Max Deals
+            max_deals = st.slider(
+                "Maximum Deals",
+                min_value=5,
+                max_value=50,
+                value=20,
+                help="Maximum number of deals to include in report"
+            )
+            
+            # Days Back
+            days_back = st.slider(
+                "Look Back Period (days)",
+                min_value=7,
+                max_value=90,
+                value=30,
+                help="How far back to look for deals"
+            )
+        
+        # Generate button
+        submitted = st.form_submit_button("🔍 Generate Report", type="primary", use_container_width=True)
+    
+    if submitted:
+        if not sectors or not stages:
+            st.error("⚠️ Please select at least one sector and one stage")
+            return
+        
+        # Store criteria in session state
+        st.session_state.report_criteria = {
+            "sectors": sectors,
+            "stages": stages,
+            "min_revenue": min_revenue,
+            "max_revenue": max_revenue,
+            "geographies": geographies,
+            "max_deals": max_deals,
+            "days_back": days_back
+        }
+        
+        # Generate report
+        generate_daily_report(st.session_state.report_criteria)
+    
+    # Show previous report if exists
+    if hasattr(st.session_state, 'last_report') and st.session_state.last_report:
+        st.write("---")
+        display_daily_report(st.session_state.last_report)
+
+
+def generate_daily_report(criteria):
+    """Generate daily deals report"""
+    
+    with st.spinner("🔎 Discovering investment opportunities..."):
+        try:
+            # Call discover API
+            response = requests.post(
+                f"{API_BASE_URL}/companies/discover",
+                json=criteria,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("success"):
+                    st.session_state.last_report = result
+                    st.success(f"✅ Found {result['deal_count']} deals matching your criteria!")
+                    st.rerun()  # Force refresh to show the report
+                else:
+                    st.error("Failed to generate report")
+            else:
+                st.error(f"API Error: {response.status_code} - {response.text}")
+        
+        except requests.Timeout:
+            st.error("⏱️ Request timed out. Please try again.")
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+
+
+def display_daily_report(report_data):
+    """Display the generated report"""
+    
+    deals = report_data.get("deals", [])
+    criteria = report_data.get("criteria", {})
+    
+    # Header
+    st.write("### 📊 Generated Report")
+    
+    # Summary
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Deals", report_data.get("deal_count", 0))
+    with col2:
+        sectors_str = ", ".join(criteria.get("sectors", [])[:3])
+        if len(criteria.get("sectors", [])) > 3:
+            sectors_str += f" +{len(criteria['sectors'])-3}"
+        st.metric("Sectors", sectors_str)
+    with col3:
+        stages_str = ", ".join(criteria.get("stages", [])[:2])
+        if len(criteria.get("stages", [])) > 2:
+            stages_str += f" +{len(criteria['stages'])-2}"
+        st.metric("Stages", stages_str)
+    
+    # Export buttons
+    st.write("")
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 2])
+    
+    with col1:
+        if st.button("📥 Export DOCX", use_container_width=True):
+            download_report("docx", criteria)
+    
+    with col2:
+        if st.button("📥 Export HTML", use_container_width=True):
+            download_report("html", criteria)
+    
+    with col3:
+        if st.button("📥 Export TXT", use_container_width=True):
+            download_report("text", criteria)
+    
+    st.write("---")
+    
+    # Deal cards
+    if not deals:
+        st.info("No deals found matching criteria")
+        return
+    
+    for i, deal in enumerate(deals, 1):
+        with st.expander(f"🔍 {i}. {deal['company_name']} - {deal['stage']}", expanded=(i <= 3)):
+            # Header info
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.write(f"**Sector:** {deal['sector']}")
+                st.write(f"**Stage:** {deal['stage']}")
+            
+            with col2:
+                if deal.get('funding_amount'):
+                    funding = deal['funding_amount']
+                    if funding >= 1_000_000_000:
+                        st.write(f"**Funding:** ${funding/1_000_000_000:.1f}B")
+                    elif funding >= 1_000_000:
+                        st.write(f"**Funding:** ${funding/1_000_000:.1f}M")
+                    else:
+                        st.write(f"**Funding:** ${funding:,.0f}")
+                
+                if deal.get('lead_investor'):
+                    st.write(f"**Lead Investor:** {deal['lead_investor']}")
+            
+            with col3:
+                if deal.get('location'):
+                    st.write(f"**Location:** {deal['location']}")
+                if deal.get('confidence_score'):
+                    score = deal['confidence_score'] * 100
+                    st.write(f"**Confidence:** {score:.0f}%")
+            
+            # Description
+            if deal.get('description'):
+                st.write("")
+                st.write(f"**Description:** {deal['description']}")
+            
+            # Key Signals
+            if deal.get('key_signals'):
+                st.write("")
+                st.write("**🎯 Key Signals:**")
+                for signal in deal['key_signals']:
+                    st.success(f"• {signal}")
+            
+            # Potential Fit
+            if deal.get('potential_fit'):
+                st.write("")
+                st.info(f"**Potential Fit:** {deal['potential_fit']}")
+            
+            # Risk Flags
+            if deal.get('risk_flags'):
+                st.write("")
+                st.write("**⚠️ Risk Flags:**")
+                for risk in deal['risk_flags']:
+                    st.warning(f"• {risk}")
+            
+            # Sources & Links
+            col1, col2 = st.columns(2)
+            with col1:
+                if deal.get('sources'):
+                    st.caption(f"📰 Sources: {', '.join(deal['sources'])}")
+            with col2:
+                if deal.get('website'):
+                    st.markdown(f"[🔗 Visit Website]({deal['website']})")
+
+
+def download_report(format_type, criteria):
+    """Download report in specified format"""
+    
+    with st.spinner(f"Generating {format_type.upper()} report..."):
+        try:
+            response = requests.post(
+                f"{API_BASE_URL}/companies/export-report",
+                json={
+                    "criteria": criteria,
+                    "format": format_type
+                },
+                timeout=120
+            )
+            
+            if response.status_code == 200:
+                # Create download link
+                from datetime import datetime
+                filename = f"Daily_Deals_Report_{datetime.now().strftime('%Y%m%d')}.{format_type if format_type != 'text' else 'txt'}"
+                
+                st.download_button(
+                    label=f"⬇️ Download {format_type.upper()}",
+                    data=response.content,
+                    file_name=filename,
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document" if format_type == "docx" else "text/html" if format_type == "html" else "text/plain"
+                )
+                
+                st.success(f"✅ Report generated! Click above to download.")
+            else:
+                st.error(f"Failed to generate report: {response.status_code}")
+        
+        except Exception as e:
+            st.error(f"Error generating report: {str(e)}")
 
 
 def fetch_deal_stats():

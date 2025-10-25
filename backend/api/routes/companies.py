@@ -4,14 +4,18 @@ Companies/Deals API Routes - Feature 1: AI-Powered Deal Sourcing
 Endpoints for managing companies and investment deals from various platforms.
 """
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from loguru import logger
+from io import BytesIO
 
 from config.database import get_db
 from services.web_scraping.deal_sourcing_manager import DealSourcingManager
 from services.deal_qualification.qualifier import DealQualifier
+from services.deal_sourcing.discovery_engine import DealDiscoveryEngine, DealCriteria
+from services.deal_sourcing.report_generator import DealReportGenerator
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -375,3 +379,263 @@ async def delete_deal(deal_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error deleting deal {deal_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Error deleting deal: {str(e)}")
+
+
+# ========== NEW: Deal Discovery & Report Generation ==========
+
+class DiscoverDealsRequest(BaseModel):
+    """Request to discover deals with criteria"""
+    sectors: List[str] = Field(
+        default=["Fintech", "ClimateTech", "Enterprise SaaS"],
+        description="Target sectors"
+    )
+    stages: List[str] = Field(
+        default=["Seed", "Series A", "Series B"],
+        description="Target stages"
+    )
+    min_revenue: Optional[float] = Field(
+        default=500_000,
+        description="Minimum revenue ($)"
+    )
+    max_revenue: Optional[float] = Field(
+        default=10_000_000,
+        description="Maximum revenue ($)"
+    )
+    geographies: List[str] = Field(
+        default=["North America", "Europe"],
+        description="Target geographies"
+    )
+    max_deals: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Maximum number of deals to return"
+    )
+    days_back: int = Field(
+        default=30,
+        ge=1,
+        le=90,
+        description="Look back N days for deals"
+    )
+
+
+class GenerateReportRequest(BaseModel):
+    """Request to generate a daily deals report"""
+    criteria: DiscoverDealsRequest
+    format: str = Field(
+        default="docx",
+        description="Report format: docx, pdf, html, or text"
+    )
+
+
+@router.post("/discover")
+async def discover_deals(
+    request: DiscoverDealsRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Discover investment deals from multiple sources based on criteria
+    
+    This endpoint:
+    1. Scrapes multiple sources (TechCrunch, AngelList, YC, etc.)
+    2. Filters by sector, stage, revenue, geography
+    3. Scores and ranks deals by relevance
+    4. Returns top deals matching criteria
+    
+    Example:
+    ```json
+    {
+        "sectors": ["Fintech", "ClimateTech"],
+        "stages": ["Seed", "Series A"],
+        "min_revenue": 500000,
+        "max_revenue": 10000000,
+        "geographies": ["North America", "Europe"],
+        "max_deals": 20
+    }
+    ```
+    """
+    try:
+        logger.info(f"Discovering deals with criteria: {request.dict()}")
+        
+        # Create criteria object
+        criteria = DealCriteria(
+            sectors=request.sectors,
+            stages=request.stages,
+            min_revenue=request.min_revenue,
+            max_revenue=request.max_revenue,
+            geographies=request.geographies,
+            days_back=request.days_back
+        )
+        
+        # Initialize discovery engine
+        engine = DealDiscoveryEngine()
+        
+        # Discover deals
+        deals = await engine.discover_deals(criteria, max_deals=request.max_deals)
+        
+        # Convert to dict for response
+        deals_data = [
+            {
+                'company_name': deal.company_name,
+                'sector': deal.sector,
+                'stage': deal.stage,
+                'description': deal.description,
+                'funding_amount': deal.funding_amount,
+                'funding_round': deal.funding_round,
+                'lead_investor': deal.lead_investor,
+                'revenue': deal.revenue,
+                'location': deal.location,
+                'country': deal.country,
+                'website': deal.website,
+                'key_signals': deal.key_signals,
+                'potential_fit': deal.potential_fit,
+                'risk_flags': deal.risk_flags,
+                'sources': deal.sources,
+                'confidence_score': deal.confidence_score,
+                'discovered_at': deal.discovered_at.isoformat() if deal.discovered_at else None
+            }
+            for deal in deals
+        ]
+        
+        return {
+            'success': True,
+            'deal_count': len(deals),
+            'deals': deals_data,
+            'criteria': request.dict()
+        }
+    
+    except Exception as e:
+        logger.error(f"Error discovering deals: {e}")
+        raise HTTPException(status_code=500, detail=f"Error discovering deals: {str(e)}")
+
+
+@router.post("/generate-report")
+async def generate_daily_report(
+    request: GenerateReportRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate a daily potential deals report
+    
+    Returns structured report data that can be displayed in UI or exported
+    
+    Example:
+    ```json
+    {
+        "criteria": {
+            "sectors": ["Fintech", "ClimateTech"],
+            "stages": ["Seed", "Series A"],
+            "max_deals": 10
+        },
+        "format": "docx"
+    }
+    ```
+    """
+    try:
+        logger.info("Generating daily deals report")
+        
+        # Create criteria
+        criteria = DealCriteria(
+            sectors=request.criteria.sectors,
+            stages=request.criteria.stages,
+            min_revenue=request.criteria.min_revenue,
+            max_revenue=request.criteria.max_revenue,
+            geographies=request.criteria.geographies,
+            days_back=request.criteria.days_back
+        )
+        
+        # Generate report
+        engine = DealDiscoveryEngine()
+        report_data = await engine.generate_daily_report(criteria, max_deals=request.criteria.max_deals)
+        
+        # Return structured data for frontend display
+        return {
+            'success': True,
+            'report': report_data
+        }
+    
+    except Exception as e:
+        logger.error(f"Error generating report: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
+
+
+@router.post("/export-report")
+async def export_report(
+    request: GenerateReportRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Export daily deals report as DOCX, PDF, HTML, or text file
+    
+    Returns a downloadable file in the requested format
+    
+    Formats:
+    - docx: Microsoft Word document (recommended)
+    - html: HTML file for web/email
+    - text: Plain text file
+    """
+    try:
+        logger.info(f"Exporting report as {request.format}")
+        
+        # Create criteria
+        criteria = DealCriteria(
+            sectors=request.criteria.sectors,
+            stages=request.criteria.stages,
+            min_revenue=request.criteria.min_revenue,
+            max_revenue=request.criteria.max_revenue,
+            geographies=request.criteria.geographies,
+            days_back=request.criteria.days_back
+        )
+        
+        # Generate report data
+        engine = DealDiscoveryEngine()
+        report_data = await engine.generate_daily_report(criteria, max_deals=request.criteria.max_deals)
+        
+        # Initialize report generator
+        generator = DealReportGenerator()
+        
+        # Generate file based on format
+        if request.format.lower() == 'docx':
+            # Generate DOCX
+            buffer = generator.generate_docx(report_data)
+            
+            return StreamingResponse(
+                buffer,
+                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                headers={
+                    "Content-Disposition": f"attachment; filename=Daily_Deals_Report_{report_data['date'].replace(' ', '_')}.docx"
+                }
+            )
+        
+        elif request.format.lower() == 'html':
+            # Generate HTML
+            html_content = generator.generate_html_report(report_data)
+            
+            return StreamingResponse(
+                BytesIO(html_content.encode('utf-8')),
+                media_type="text/html",
+                headers={
+                    "Content-Disposition": f"attachment; filename=Daily_Deals_Report_{report_data['date'].replace(' ', '_')}.html"
+                }
+            )
+        
+        elif request.format.lower() == 'text':
+            # Generate text
+            text_content = generator.generate_text_report(report_data)
+            
+            return StreamingResponse(
+                BytesIO(text_content.encode('utf-8')),
+                media_type="text/plain",
+                headers={
+                    "Content-Disposition": f"attachment; filename=Daily_Deals_Report_{report_data['date'].replace(' ', '_')}.txt"
+                }
+            )
+        
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported format: {request.format}")
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting report: {e}")
+        raise HTTPException(status_code=500, detail=f"Error exporting report: {str(e)}")
