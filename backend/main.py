@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from api.routes import files, analysis, modeling, reports, llm_analysis
+from api.routes import files, analysis, modeling, reports, llm_analysis, search
 from utils.config import settings
 from utils.logger import setup_logger
 
@@ -27,7 +27,7 @@ logger = setup_logger(__name__)
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="AI-powered investment analysis platform",
+    description="AI-powered investment analysis platform with semantic search",
     docs_url="/api/docs",
     redoc_url="/api/redoc"
 )
@@ -60,6 +60,7 @@ create_directories()
 app.include_router(files.router, prefix="/api/v1/files", tags=["Files"])
 app.include_router(analysis.router, prefix="/api/v1/analysis", tags=["Analysis"])
 app.include_router(llm_analysis.router, prefix="/api/v1/llm", tags=["LLM Analysis"])
+app.include_router(search.router, prefix="/api/v1/search", tags=["Semantic Search"])
 app.include_router(modeling.router, prefix="/api/v1/modeling", tags=["Modeling"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["Reports"])
 

@@ -55,11 +55,7 @@ investment-ai/
 │   ├── processed/          # Processed documents
 │   └── outputs/            # Generated reports
 ├── docs/                   # Documentation
-│   ├── PROJECT_STATUS_AND_ROADMAP.md  ⭐ START HERE
-│   ├── LLM_INTEGRATION_GUIDE.md
-│   ├── QUICK_START_LLM.md
-│   ├── ARCHITECTURE_DIAGRAM.md
-│   └── HANDOFF_SUMMARY.md
+├── MASTER_GUIDE.md         # ⭐ START HERE - Complete implementation guide
 ├── models/                 # AI/ML models
 ├── tests/                  # Test suite
 └── requirements.txt        # Python dependencies
@@ -126,11 +122,14 @@ Frontend will be available at: http://localhost:8501
 
 ## 📚 Documentation
 
-- � **[Project Status & Roadmap](docs/PROJECT_STATUS_AND_ROADMAP.md)** ⭐ **START HERE** - Complete overview
-- �📖 **[LLM Integration Guide](docs/LLM_INTEGRATION_GUIDE.md)** - Implementation guide
-- ⚡ **[Quick Start LLM](docs/QUICK_START_LLM.md)** - Fast reference
-- 🏗️ **[Architecture Diagram](docs/ARCHITECTURE_DIAGRAM.md)** - Visual architecture
-- 📧 **[Handoff Summary](docs/HANDOFF_SUMMARY.md)** - Team handoff document
+📘 **[MASTER_GUIDE.md](./MASTER_GUIDE.md)** ⭐ **START HERE** - Everything you need:
+- Core platform overview (analysis, RAG queries, database)
+- Implementation guide for Features 1, 3, 4, 5
+- Code patterns and examples
+- Cost optimization strategies
+- Quick start commands
+
+Additional docs in `/docs` folder for deep dives.
 
 ## 🤝 Contributing
 
