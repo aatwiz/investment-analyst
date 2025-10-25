@@ -194,6 +194,12 @@ class DealQualifier:
     def _build_scoring_prompt(self, deal: Dict[str, Any], context: Optional[Dict]) -> str:
         """Build prompt for LLM scoring."""
         
+        # Safely format numeric fields
+        funding_amount = deal.get('funding_amount') or 0
+        total_funding = deal.get('total_funding') or 0
+        employee_count = deal.get('employee_count')
+        founded_year = deal.get('founded_year')
+        
         prompt = f"""Score this investment opportunity across 6 dimensions (0-100):
 
 **Company Information:**
@@ -202,11 +208,11 @@ class DealQualifier:
 - Industry: {deal.get('industry', 'Unknown')}
 - Stage: {deal.get('stage', 'Unknown')}
 - Location: {deal.get('location', 'Unknown')}
-- Funding Amount: ${deal.get('funding_amount', 0):,.0f}
-- Total Funding: ${deal.get('total_funding', 0):,.0f}
+- Funding Amount: ${funding_amount:,.0f}
+- Total Funding: ${total_funding:,.0f}
 - Investors: {', '.join(deal.get('investors', [])[:5])}
-- Employee Count: {deal.get('employee_count', 'Unknown')}
-- Founded: {deal.get('founded_year', 'Unknown')}
+- Employee Count: {employee_count if employee_count else 'Unknown'}
+- Founded: {founded_year if founded_year else 'Unknown'}
 - Website: {deal.get('website', 'Unknown')}
 """
         
@@ -311,13 +317,15 @@ Return ONLY a JSON object with scores:
         """Generate detailed analysis narrative."""
         
         try:
+            funding_amount = deal.get('funding_amount') or 0
+            
             prompt = f"""Write a concise investment analysis (3-4 paragraphs) for this deal:
 
 **Company:** {deal.get('name')}
 **Description:** {deal.get('description')}
 **Industry:** {deal.get('industry')}
 **Stage:** {deal.get('stage')}
-**Funding:** ${deal.get('funding_amount', 0):,.0f}
+**Funding:** ${funding_amount:,.0f}
 
 **Scores:**
 - Market Opportunity: {scores.get('market_opportunity', 0):.0f}/100
