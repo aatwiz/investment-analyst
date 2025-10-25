@@ -5,16 +5,16 @@ Inspired by open-notebook's embedding workflow, adapted for PostgreSQL + pgvecto
 import os
 from typing import List, Optional
 
-import openai
+from openai import AsyncOpenAI
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.models.document import DocumentEmbedding
-from backend.utils.text_utils import split_text
+from models.document import DocumentEmbedding
+from utils.text_utils import split_text
 
 # Configure OpenAI
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Embedding configuration
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
@@ -37,7 +37,7 @@ async def generate_embedding(text: str) -> List[float]:
         Exception: If embedding generation fails
     """
     try:
-        response = await openai.embeddings.create(
+        response = await client.embeddings.create(
             input=text,
             model=EMBEDDING_MODEL
         )
@@ -61,7 +61,7 @@ async def generate_embeddings_batch(texts: List[str]) -> List[List[float]]:
         List of embedding vectors
     """
     try:
-        response = await openai.embeddings.create(
+        response = await client.embeddings.create(
             input=texts,
             model=EMBEDDING_MODEL
         )
