@@ -136,7 +136,7 @@ def main():
         
         page = st.radio(
             "Go to",
-            ["🏠 Home", "📤 Upload Documents", "📁 Document Library", "📊 Analysis", "💰 Financial Modeling", "📝 Generate Reports"],
+            ["🏠 Home", "� Deal Sourcing", "�📤 Upload Documents", "📁 Document Library", "📊 Analysis", "💰 Financial Modeling", "📝 Generate Reports"],
             label_visibility="collapsed"
         )
         
@@ -165,7 +165,9 @@ def main():
     # Main content based on selected page
     if page == "🏠 Home":
         show_home_page()
-    elif page == "📤 Upload Documents":
+    elif page == "� Deal Sourcing":
+        show_deal_sourcing_page()
+    elif page == "�📤 Upload Documents":
         show_upload_page()
     elif page == "📁 Document Library":
         show_library_page()
@@ -253,7 +255,7 @@ def show_home_page():
     st.write("### 🧩 MVP Features")
     
     features = [
-        {"icon": "🔍", "title": "AI-Powered Deal Sourcing", "status": "Coming Soon"},
+        {"icon": "🔍", "title": "AI-Powered Deal Sourcing", "status": "✅ Live"},
         {"icon": "📄", "title": "Automated DD Document Analysis", "status": "Phase 2"},
         {"icon": "🌐", "title": "Market & Competitive Analysis", "status": "Phase 3"},
         {"icon": "📊", "title": "Financial Modeling & Scenarios", "status": "Phase 4"},
@@ -267,10 +269,535 @@ def show_home_page():
         with col2:
             st.write(f"**{feature['title']}**")
         with col3:
-            if feature['status'] == "Phase 1":
+            if feature['status'] == "✅ Live":
+                st.success(feature['status'])
+            elif feature['status'] == "Phase 1":
                 st.success(feature['status'])
             else:
                 st.info(feature['status'])
+
+
+def show_deal_sourcing_page():
+    """Deal sourcing page - Feature 1"""
+    
+    st.write("### 🔍 AI-Powered Deal Sourcing")
+    st.write("Automatically discover and qualify investment opportunities from multiple platforms")
+    
+    # Tabs for different functions
+    tab1, tab2, tab3, tab4 = st.tabs(["🔎 Scrape Deals", "📋 Deal Pipeline", "🎯 Qualified Deals", "📊 Statistics"])
+    
+    with tab1:
+        show_scrape_deals_tab()
+    
+    with tab2:
+        show_deal_pipeline_tab()
+    
+    with tab3:
+        show_qualified_deals_tab()
+    
+    with tab4:
+        show_deal_stats_tab()
+
+
+def show_scrape_deals_tab():
+    """Tab for scraping new deals"""
+    
+    st.write("#### Configure Deal Scraping")
+    
+    # Platform selection
+    st.write("**Select Platforms to Scrape:**")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        crunchbase = st.checkbox("Crunchbase", value=True, help="Requires API key")
+        magnitt = st.checkbox("Magnitt", value=True, help="MENA region focus")
+    
+    with col2:
+        angellist = st.checkbox("AngelList", value=False, help="Web scraping")
+        wamda = st.checkbox("Wamda", value=True, help="MENA ecosystem")
+    
+    with col3:
+        bloomberg = st.checkbox("Bloomberg", value=False, help="News articles")
+        pitchbook = st.checkbox("PitchBook", value=False, help="Requires API key")
+    
+    # Collect selected platforms
+    platforms = []
+    if crunchbase: platforms.append("crunchbase")
+    if angellist: platforms.append("angellist")
+    if bloomberg: platforms.append("bloomberg")
+    if magnitt: platforms.append("magnitt")
+    if wamda: platforms.append("wamda")
+    if pitchbook: platforms.append("pitchbook")
+    
+    st.divider()
+    
+    # Filters
+    st.write("**Filters (Optional):**")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        industries = st.multiselect(
+            "Industries",
+            ["Fintech", "HealthTech", "E-commerce", "SaaS", "AI/ML", "EdTech", "CleanTech", "AgriTech"],
+            help="Filter by industry sectors"
+        )
+        
+        locations = st.multiselect(
+            "Locations",
+            ["UAE", "Saudi Arabia", "Egypt", "United States", "United Kingdom", "Singapore"],
+            help="Filter by geographic location"
+        )
+    
+    with col2:
+        stages = st.multiselect(
+            "Funding Stages",
+            ["Pre-Seed", "Seed", "Series A", "Series B", "Series C", "Series D+"],
+            help="Filter by funding stage"
+        )
+        
+        min_funding = st.number_input(
+            "Minimum Funding ($)",
+            min_value=0,
+            value=500000,
+            step=100000,
+            help="Minimum funding amount in USD"
+        )
+    
+    st.divider()
+    
+    # Qualification settings
+    st.write("**AI Qualification:**")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        qualify_deals = st.checkbox("Qualify deals with AI", value=True, help="Use GPT-4o-mini to score deals")
+    
+    with col2:
+        if qualify_deals:
+            min_score = st.slider("Minimum Score", 0, 100, 60, help="Only show deals above this score")
+        else:
+            min_score = 0
+    
+    st.divider()
+    
+    # Scrape button
+    col1, col2, col3 = st.columns([2, 1, 2])
+    
+    with col2:
+        if st.button("🚀 Start Scraping", type="primary", use_container_width=True, disabled=len(platforms) == 0):
+            if not platforms:
+                st.error("Please select at least one platform")
+            else:
+                scrape_deals(platforms, industries, locations, stages, min_funding, qualify_deals, min_score)
+
+
+def scrape_deals(platforms, industries, locations, stages, min_funding, qualify, min_score):
+    """Execute deal scraping"""
+    
+    with st.spinner(f"Scraping deals from {len(platforms)} platform(s)..."):
+        try:
+            # Build request payload
+            payload = {
+                "platforms": platforms,
+                "qualify": qualify,
+                "min_score": min_score
+            }
+            
+            # Add filters if provided
+            filters = {}
+            if industries:
+                filters["industries"] = [i.lower() for i in industries]
+            if locations:
+                filters["locations"] = locations
+            if stages:
+                filters["stages"] = [s.replace("-", " ").title() for s in stages]
+            if min_funding > 0:
+                filters["min_funding"] = min_funding
+            
+            if filters:
+                payload["filters"] = filters
+            
+            # Make API call
+            response = requests.post(
+                f"{API_BASE_URL}/companies/scrape",
+                json=payload,
+                timeout=180  # 3 minutes timeout
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("success"):
+                    st.success("✅ Scraping completed successfully!")
+                    
+                    # Display summary
+                    summary = result.get("summary", {})
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.metric("Total Scraped", summary.get("total_scraped", 0))
+                    with col2:
+                        st.metric("Unique Companies", summary.get("unique_companies", 0))
+                    with col3:
+                        st.metric("Qualified Deals", summary.get("qualified_deals", 0))
+                    with col4:
+                        total_funding = summary.get("total_funding", 0)
+                        st.metric("Total Funding", f"${total_funding/1_000_000:.1f}M")
+                    
+                    # Top deals
+                    deals = result.get("deals", [])
+                    if deals:
+                        st.write("### 🏆 Top Deals")
+                        display_deals_table(deals[:10])
+                    
+                    # Platform breakdown
+                    if summary.get("platforms"):
+                        with st.expander("📊 Platform Breakdown"):
+                            for platform, count in summary["platforms"].items():
+                                st.write(f"- **{platform}**: {count} deals")
+                    
+                    # Top industries
+                    if summary.get("top_industries"):
+                        with st.expander("🏭 Top Industries"):
+                            for industry, count in list(summary["top_industries"].items())[:10]:
+                                st.write(f"- **{industry}**: {count} deals")
+                
+                else:
+                    st.error(f"Scraping failed: {result.get('message', 'Unknown error')}")
+            
+            else:
+                st.error(f"API Error: {response.status_code}")
+                st.write(response.text)
+        
+        except requests.exceptions.Timeout:
+            st.error("⏱️ Request timed out. This can happen with large scraping jobs. Try reducing the number of platforms or adding more specific filters.")
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+
+
+def show_deal_pipeline_tab():
+    """Tab for viewing all deals"""
+    
+    st.write("#### All Deals Pipeline")
+    
+    # Filters
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        platform_filter = st.selectbox(
+            "Platform",
+            ["All", "Crunchbase", "AngelList", "Bloomberg", "Magnitt", "Wamda", "PitchBook"]
+        )
+    
+    with col2:
+        industry_filter = st.text_input("Industry", placeholder="e.g. fintech")
+    
+    with col3:
+        min_funding_filter = st.number_input("Min Funding ($M)", min_value=0.0, value=0.0, step=0.5)
+    
+    with col4:
+        limit = st.selectbox("Results per page", [20, 50, 100], index=1)
+    
+    # Fetch button
+    if st.button("🔍 Fetch Deals", use_container_width=True):
+        fetch_deals(platform_filter, industry_filter, min_funding_filter, limit)
+
+
+def fetch_deals(platform, industry, min_funding, limit):
+    """Fetch deals from API"""
+    
+    with st.spinner("Fetching deals..."):
+        try:
+            params = {"limit": limit, "offset": 0}
+            
+            if platform != "All":
+                params["platforms"] = platform.lower()
+            if industry:
+                params["industries"] = industry.lower()
+            if min_funding > 0:
+                params["min_funding"] = int(min_funding * 1_000_000)
+            
+            response = requests.get(
+                f"{API_BASE_URL}/companies/deals",
+                params=params
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("success"):
+                    deals = result.get("deals", [])
+                    count = result.get("count", 0)
+                    
+                    if deals:
+                        st.success(f"Found {count} deals")
+                        display_deals_table(deals)
+                    else:
+                        st.info("📭 No deals found matching your criteria. Try scraping first!")
+                else:
+                    st.warning(result.get("message", "No deals available yet"))
+            else:
+                st.error(f"API Error: {response.status_code}")
+        
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+
+
+def show_qualified_deals_tab():
+    """Tab for qualified deals only"""
+    
+    st.write("#### AI-Qualified Investment Opportunities")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        min_score = st.slider("Minimum Score", 0, 100, 70)
+    
+    with col2:
+        recommendations = st.multiselect(
+            "Recommendations",
+            ["Strong Pass", "Pass", "Review"],
+            default=["Strong Pass", "Pass"]
+        )
+    
+    with col3:
+        limit = st.selectbox("Results", [10, 20, 50], index=1)
+    
+    if st.button("🎯 Show Qualified Deals", use_container_width=True):
+        fetch_qualified_deals(min_score, recommendations, limit)
+
+
+def fetch_qualified_deals(min_score, recommendations, limit):
+    """Fetch qualified deals"""
+    
+    with st.spinner("Fetching qualified deals..."):
+        try:
+            params = {
+                "min_score": min_score,
+                "limit": limit,
+                "offset": 0
+            }
+            
+            if recommendations:
+                params["recommendations"] = ",".join(recommendations)
+            
+            response = requests.get(
+                f"{API_BASE_URL}/companies/deals",
+                params=params
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("success"):
+                    deals = result.get("deals", [])
+                    
+                    if deals:
+                        st.success(f"Found {len(deals)} qualified deals")
+                        display_qualified_deals_table(deals)
+                    else:
+                        st.info("📭 No qualified deals found. Run scraping with AI qualification enabled!")
+                else:
+                    st.warning(result.get("message"))
+            else:
+                st.error(f"API Error: {response.status_code}")
+        
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+
+
+def show_deal_stats_tab():
+    """Tab for statistics"""
+    
+    st.write("#### Pipeline Statistics")
+    
+    if st.button("📊 Refresh Stats", use_container_width=True):
+        fetch_deal_stats()
+
+
+def fetch_deal_stats():
+    """Fetch deal statistics"""
+    
+    with st.spinner("Loading statistics..."):
+        try:
+            response = requests.get(f"{API_BASE_URL}/companies/stats")
+            
+            if response.status_code == 200:
+                result = response.json()
+                
+                if result.get("success"):
+                    stats = result.get("stats", {})
+                    
+                    # Overview metrics
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.metric("Total Deals", stats.get("total_deals", 0))
+                    with col2:
+                        st.metric("Avg Score", f"{stats.get('avg_score', 0):.1f}")
+                    with col3:
+                        st.metric("Platforms", len(stats.get("by_platform", {})))
+                    with col4:
+                        last_updated = stats.get("last_updated", "Never")
+                        st.metric("Last Updated", last_updated if last_updated != "Never" else "N/A")
+                    
+                    st.divider()
+                    
+                    # Charts
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        if stats.get("by_platform"):
+                            st.write("**Deals by Platform**")
+                            for platform, count in stats["by_platform"].items():
+                                st.write(f"- {platform}: {count}")
+                    
+                    with col2:
+                        if stats.get("by_recommendation"):
+                            st.write("**By Recommendation**")
+                            for rec, count in stats["by_recommendation"].items():
+                                st.write(f"- {rec}: {count}")
+                    
+                    # More details
+                    if stats.get("by_industry"):
+                        with st.expander("🏭 Top Industries"):
+                            for industry, count in list(stats["by_industry"].items())[:15]:
+                                st.write(f"- {industry}: {count}")
+                    
+                    if stats.get("by_location"):
+                        with st.expander("🌍 Top Locations"):
+                            for location, count in list(stats["by_location"].items())[:15]:
+                                st.write(f"- {location}: {count}")
+                else:
+                    st.info(result.get("message", "No statistics available yet"))
+            else:
+                st.error(f"API Error: {response.status_code}")
+        
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+
+
+def display_deals_table(deals):
+    """Display deals in a formatted table"""
+    
+    for deal in deals:
+        with st.container():
+            col1, col2, col3 = st.columns([3, 2, 1])
+            
+            with col1:
+                # Company name and description
+                name = deal.get("deal", {}).get("name") if "deal" in deal else deal.get("name", "Unknown")
+                desc = deal.get("deal", {}).get("description") if "deal" in deal else deal.get("description", "")
+                
+                st.write(f"### {name}")
+                if desc:
+                    st.caption(desc[:200] + "..." if len(desc) > 200 else desc)
+            
+            with col2:
+                # Key metrics
+                deal_data = deal.get("deal", {}) if "deal" in deal else deal
+                
+                funding = deal_data.get("funding_amount", 0)
+                if funding:
+                    st.metric("Funding", f"${funding/1_000_000:.1f}M")
+                
+                stage = deal_data.get("stage", "N/A")
+                if stage:
+                    st.write(f"**Stage:** {stage}")
+                
+                location = deal_data.get("location", "N/A")
+                if location:
+                    st.write(f"**Location:** {location}")
+            
+            with col3:
+                # Score and source
+                if "score" in deal:
+                    score = deal.get("score", 0)
+                    score_color = "🟢" if score >= 75 else "🟡" if score >= 60 else "🔴"
+                    st.metric("Score", f"{score_color} {score:.0f}")
+                
+                source = deal_data.get("source", "Unknown")
+                st.caption(f"📍 {source}")
+            
+            st.divider()
+
+
+def display_qualified_deals_table(deals):
+    """Display qualified deals with full details"""
+    
+    for deal in deals:
+        with st.expander(f"{'🟢' if deal.get('recommendation') == 'Strong Pass' else '🟡'} {deal.get('deal', {}).get('name', 'Unknown')} - Score: {deal.get('score', 0):.0f}"):
+            
+            deal_data = deal.get("deal", {})
+            
+            # Basic info
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.write(f"**Industry:** {deal_data.get('industry', 'N/A')}")
+                st.write(f"**Stage:** {deal_data.get('stage', 'N/A')}")
+            
+            with col2:
+                funding = deal_data.get("funding_amount", 0)
+                st.write(f"**Funding:** ${funding/1_000_000:.1f}M" if funding else "**Funding:** N/A")
+                st.write(f"**Location:** {deal_data.get('location', 'N/A')}")
+            
+            with col3:
+                st.write(f"**Recommendation:** {deal.get('recommendation', 'N/A')}")
+                st.write(f"**Source:** {deal_data.get('source', 'N/A')}")
+            
+            # Description
+            desc = deal_data.get("description", "")
+            if desc:
+                st.write("**Description:**")
+                st.write(desc)
+            
+            # Scores breakdown
+            if deal.get("scores"):
+                st.write("**Score Breakdown:**")
+                scores = deal["scores"]
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Market", f"{scores.get('market_opportunity', 0):.0f}")
+                    st.metric("Team", f"{scores.get('team', 0):.0f}")
+                with col2:
+                    st.metric("Product", f"{scores.get('product', 0):.0f}")
+                    st.metric("Traction", f"{scores.get('traction', 0):.0f}")
+                with col3:
+                    st.metric("Financials", f"{scores.get('financials', 0):.0f}")
+                    st.metric("Strategic Fit", f"{scores.get('strategic_fit', 0):.0f}")
+            
+            # Strengths and concerns
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                strengths = deal.get("strengths", [])
+                if strengths:
+                    st.write("**✅ Strengths:**")
+                    for strength in strengths:
+                        st.success(f"• {strength}")
+            
+            with col2:
+                concerns = deal.get("concerns", [])
+                if concerns:
+                    st.write("**⚠️ Concerns:**")
+                    for concern in concerns:
+                        st.warning(f"• {concern}")
+            
+            # Analysis
+            analysis = deal.get("analysis", "")
+            if analysis:
+                st.write("**📝 Analysis:**")
+                st.write(analysis)
+            
+            # Links
+            if deal_data.get("source_url"):
+                st.write(f"[🔗 View on {deal_data.get('source', 'Platform')}]({deal_data['source_url']})")
 
 
 def show_upload_page():
