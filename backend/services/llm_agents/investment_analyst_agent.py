@@ -16,7 +16,7 @@ import os
 from openai import AsyncOpenAI
 
 from utils.logger import setup_logger
-from services.document_analysis import DocumentAnalyzer
+from services.file_processing import FileProcessor  # Use FileProcessor instead
 
 logger = setup_logger(__name__)
 
@@ -35,13 +35,13 @@ class InvestmentAnalystAgent:
     """
     LLM-powered investment analyst that provides deep analysis and recommendations.
     
-    Uses the DocumentAnalyzer as a pre-processing layer to structure information,
-    then applies LLM reasoning for nuanced insights.
+    Directly extracts text from documents and feeds to LLM for analysis,
+    avoiding keyword-based pre-processing that can introduce bias.
     """
     
     def __init__(self, config: Optional[LLMConfig] = None):
         self.config = config or LLMConfig()
-        self.analyzer = DocumentAnalyzer()
+        self.file_processor = FileProcessor()  # Extract raw text only
         self.llm = None  # Will be initialized when API keys are added
         logger.info(f"Investment Analyst Agent initialized with {self.config.provider}")
     
@@ -86,33 +86,210 @@ class InvestmentAnalystAgent:
         
         logger.info(f"Found file at: {file_path}")
         
-        # Step 1: Pre-process with DocumentAnalyzer (keyword-based)
-        analyzer_result = self.analyzer.analyze_document(file_path, "comprehensive")
+        # Step 1: Extract raw text and tables from document (NO keyword analysis)
+        extracted_data = self.file_processor.process_file(file_path)
         
-        # Check if analysis was successful
-        if not analyzer_result.get("success"):
-            raise Exception(f"Document analysis failed: {analyzer_result.get('error')}")
+        # Check if extraction was successful
+        if extracted_data.get("status") == "error":
+            raise Exception(f"Document extraction failed: {extracted_data.get('error')}")
         
-        # Extract the actual analysis data
-        structured_data = analyzer_result.get("analysis", {})
+        # Get raw text content
+        raw_text = extracted_data.get("text", "")
+        tables = extracted_data.get("tables", [])
+        metadata = extracted_data.get("metadata", {})
         
-        # Step 2: Build LLM prompt from structured data
-        prompt = self._build_analysis_prompt(structured_data, focus_areas)
+        # Step 2: Build LLM prompt from raw content (not keyword analysis)
+        prompt = self._build_analysis_prompt_from_raw_text(
+            raw_text=raw_text,
+            tables=tables,
+            metadata=metadata,
+            focus_areas=focus_areas
+        )
         
-        # Step 3: Get LLM insights (TODO: implement when API keys added)
+        # Step 3: Get LLM insights
         llm_insights = await self._get_llm_insights(prompt)
         
-        # Step 4: Combine structured + LLM insights
-        final_analysis = self._merge_insights(structured_data, llm_insights)
+        # Step 4: Return LLM analysis directly
+        final_analysis = {
+            "analysis_type": "llm_powered",
+            "extraction_method": "raw_text",
+            "document_info": {
+                "filename": filename,
+                "file_type": extracted_data.get("type"),
+                "page_count": metadata.get("page_count", 0),
+                "word_count": len(raw_text.split())
+            },
+            "llm_analysis": llm_insights,
+            "model_used": self.config.model
+        }
         
         logger.info(f"LLM Agent completed analysis: {filename}")
         return final_analysis
     
-    def _build_analysis_prompt(
-        self, 
-        structured_data: Dict[str, Any],
+    def _build_analysis_prompt_from_raw_text(
+        self,
+        raw_text: str,
+        tables: List[Dict[str, Any]],
+        metadata: Dict[str, Any],
         focus_areas: Optional[List[str]] = None
     ) -> str:
+        """
+        Build LLM prompt directly from raw extracted text.
+        
+        This avoids keyword-based bias and lets the LLM read the actual content.
+        """
+        
+        # Truncate text if too long (keep first ~50K characters for context)
+        max_chars = 50000
+        text_preview = raw_text[:max_chars]
+        if len(raw_text) > max_chars:
+            text_preview += f"\n\n... [Document continues for {len(raw_text) - max_chars} more characters]"
+        
+        # Build prompt
+        prompt_parts = [
+            "# Investment Due Diligence Analysis",
+            "",
+            "You are an experienced investment analyst with 15+ years in venture capital and private equity.",
+            "You specialize in financial statement analysis, due diligence, and investment recommendations.",
+            "",
+            "## Task",
+            "Analyze the financial document provided below and give a comprehensive investment recommendation.",
+            "",
+            "## Document Information",
+            f"- File Type: {metadata.get('type', 'Unknown')}",
+            f"- Pages: {metadata.get('page_count', 'Unknown')}",
+            f"- Word Count: {len(raw_text.split())}",
+            "",
+            "## IMPORTANT INSTRUCTIONS",
+            "",
+            "**READ THE DOCUMENT CAREFULLY**. This is likely a financial statement with:",
+            "- Income statements showing Revenue, Costs, Profit/Loss",
+            "- Balance sheets with Assets, Liabilities, Equity",
+            "- Cash flow statements",
+            "- Notes and disclosures",
+            "",
+            "**DO NOT confuse accounting terms with problems:**",
+            "- 'Loss from death of livestock' = normal operational cost, NOT a business loss",
+            "- 'Liabilities' = standard balance sheet item, NOT necessarily bad",
+            "- 'Impairment' = accounting adjustment, NOT a crisis",
+            "",
+            "**FOCUS ON THE ACTUAL NUMBERS:**",
+            "- Is Revenue growing or declining?",
+            "- Is the company profitable? (Check NET PROFIT/LOSS)",
+            "- Are profit margins improving?",
+            "- Is cash flow positive?",
+            "- Are assets greater than liabilities?",
+            "",
+            "---",
+            "",
+            "## DOCUMENT CONTENT",
+            "",
+            text_preview,
+            "",
+        ]
+        
+        # Add tables if present
+        if tables:
+            prompt_parts.extend([
+                "",
+                "## EXTRACTED TABLES",
+                "",
+                f"The document contains {len(tables)} tables with financial data.",
+                "Key tables have been extracted above in the document content.",
+                ""
+            ])
+        
+        # Add focus areas if specified
+        if focus_areas:
+            prompt_parts.extend([
+                "## SPECIFIC FOCUS AREAS REQUESTED",
+                ""
+            ])
+            for area in focus_areas:
+                prompt_parts.append(f"- {area}")
+            prompt_parts.append("")
+        
+        # Analysis requirements
+        prompt_parts.extend([
+            "---",
+            "",
+            "## REQUIRED OUTPUT",
+            "",
+            "**CRITICAL**: Respond with ONLY valid JSON. No markdown, no code blocks, no text outside JSON.",
+            "",
+            "Required JSON structure:",
+            "",
+            "```json",
+            "{",
+            '  "executive_summary": "2-3 sentences summarizing the investment case",',
+            '  "financial_health": {',
+            '    "analysis": "Detailed financial assessment based on ACTUAL numbers from the document",',
+            '    "key_metrics": {',
+            '      "revenue_trend": "Growing/Stable/Declining - cite actual figures",',
+            '      "profitability": "Profitable/Breakeven/Unprofitable - cite NET PROFIT figure",',
+            '      "cash_position": "Strong/Adequate/Weak - based on cash flow"',
+            '    },',
+            '    "concerns": ["Real financial issues based on numbers, not accounting terms"],',
+            '    "positives": ["Financial strengths with specific figures"]',
+            '  },',
+            '  "risk_assessment": {',
+            '    "score": 3,  // 0-10 (0=no risk, 10=critical risk) - base on ACTUAL performance',
+            '    "analysis": "Risk evaluation based on financial performance trends",',
+            '    "critical_risks": [',
+            '      {',
+            '        "category": "financial/operational/market/legal",',
+            '        "issue": "Specific issue with evidence from document",',
+            '        "severity": 6,  // 0-10',
+            '        "impact": "Concrete impact description",',
+            '        "mitigation": "Recommended mitigation"',
+            '      }',
+            '    ]',
+            '  },',
+            '  "opportunity_analysis": {',
+            '    "analysis": "Growth opportunities and competitive advantages",',
+            '    "key_strengths": [',
+            '      {',
+            '        "area": "Market position/Technology/Financials/etc",',
+            '        "description": "Specific strength",',
+            '        "competitive_advantage": "Why this matters"',
+            '      }',
+            '    ],',
+            '    "growth_potential": {',
+            '      "market": "Market opportunity assessment",',
+            '      "scalability": "Scalability evaluation",',
+            '      "timeline": "Expected growth trajectory"',
+            '    }',
+            '  },',
+            '  "recommendation": {',
+            '    "action": "BUY/HOLD/AVOID",',
+            '    "confidence": 80,  // 0-100% - base on quality of data',
+            '    "reasoning": "Clear reasoning based on financial performance",',
+            '    "target_valuation": "Suggested valuation if applicable",',
+            '    "conditions": ["Key factors to monitor"]',
+            '  },',
+            '  "next_steps": [',
+            '    {',
+            '      "category": "documentation/verification/questions",',
+            '      "action": "Specific action",',
+            '      "priority": "high/medium/low",',
+            '      "rationale": "Why needed"',
+            '    }',
+            '  ]',
+            "}",
+            "```",
+            "",
+            "### CRITICAL REMINDERS:",
+            "",
+            "1. **READ THE ACTUAL NUMBERS** - Don't guess based on keywords",
+            "2. **NET PROFIT > 0 = Profitable** - Even if document mentions some losses",
+            "3. **Revenue Growth% = ((Current - Previous) / Previous) × 100**",
+            "4. **Check the Statement Period** - Q1, Q2, H1, Annual?",
+            "5. **Compare Year-over-Year** - Is performance improving?",
+            "",
+            "Analyze the document now and provide your JSON response."
+        ])
+        
+        return "\n".join(prompt_parts)
         """
         Build the LLM prompt from pre-processed structured data.
         
