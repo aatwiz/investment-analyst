@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 from pathlib import Path
 import re
 
-from services.file_processor import FileProcessor
+from services.file_processing import FileProcessor
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)

@@ -448,32 +448,46 @@ def show_analysis_page():
     with col2:
         analysis_type = st.selectbox(
             "Analysis Type",
-            options=["comprehensive", "summary", "red_flags", "financial"],
+            options=["llm_powered", "comprehensive", "summary", "red_flags", "financial"],
             help="Type of analysis to perform"
         )
+        
+        # Show LLM info if selected
+        if analysis_type == "llm_powered":
+            st.info("🤖 **LLM-Powered Analysis**: Uses AI to provide deep insights, risk assessment, and investment recommendations. Pre-processes with keyword analysis then applies GPT-4 reasoning.")
     
     # Analyze button
     if st.button("🔍 Analyze Document", type="primary", use_container_width=True):
         with st.spinner(f"Analyzing {selected_file}..."):
             try:
-                response = requests.post(
-                    f"{API_BASE_URL}/analysis/analyze",
-                    json={
+                # Route to appropriate endpoint based on analysis type
+                if analysis_type == "llm_powered":
+                    endpoint = f"{API_BASE_URL}/llm/analyze"
+                    payload = {"filename": selected_file}
+                else:
+                    endpoint = f"{API_BASE_URL}/analysis/analyze"
+                    payload = {
                         "filename": selected_file,
                         "analysis_type": analysis_type
                     }
-                )
+                
+                response = requests.post(endpoint, json=payload)
                 
                 if response.status_code == 200:
                     result = response.json()
                     
-                    if result.get("success"):
+                    # Handle both "success" (keyword API) and "status" (LLM API) response formats
+                    is_success = result.get("success") or result.get("status") == "success"
+                    
+                    if is_success:
                         st.success("✅ Analysis completed successfully!")
                         
                         # Display results based on analysis type
                         analysis = result.get("analysis", {})
                         
-                        if analysis_type == "comprehensive":
+                        if analysis_type == "llm_powered":
+                            display_llm_analysis(analysis, result)
+                        elif analysis_type == "comprehensive":
                             display_comprehensive_analysis(analysis, result)
                         elif analysis_type == "summary":
                             display_summary_analysis(analysis)
@@ -538,6 +552,164 @@ def show_analysis_page():
                             display_summary_analysis(analysis)
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
+
+
+def display_llm_analysis(analysis: dict, result: dict):
+    """Display LLM-powered analysis results"""
+    
+    # Extract LLM analysis data
+    llm_data = analysis.get("llm_analysis", {})
+    
+    # Executive Summary
+    exec_summary = llm_data.get("executive_summary") or llm_data.get("risk_assessment", {}).get("analysis", "")
+    if exec_summary:
+        st.write("### 📋 Executive Summary")
+        st.info(exec_summary)
+    
+    # Investment Recommendation
+    st.write("### 💡 Investment Recommendation")
+    rec_data = llm_data.get("recommendation", {})
+    recommendation = rec_data.get("action", "N/A")
+    confidence = rec_data.get("confidence", 0)
+    reasoning = rec_data.get("reasoning", "")
+    
+    recommendation_colors = {
+        "BUY": "🟢",
+        "HOLD": "🟡",
+        "AVOID": "🔴"
+    }
+    
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.metric(
+            "Recommendation",
+            f"{recommendation_colors.get(recommendation, '⚪')} {recommendation}"
+        )
+    with col2:
+        st.metric("Confidence", f"{confidence}%")
+    
+    if reasoning:
+        st.write(f"**Reasoning:** {reasoning}")
+    
+    # Risk Assessment
+    st.write("### ⚠️ Risk Assessment")
+    risk = llm_data.get("risk_assessment", {})
+    
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        risk_score = risk.get("score", 0)
+        risk_color = "🔴" if risk_score >= 7 else "🟡" if risk_score >= 4 else "🟢"
+        st.metric("Risk Score", f"{risk_color} {risk_score}/10")
+    
+    with col2:
+        risk_analysis = risk.get("analysis", "")
+        if risk_analysis:
+            st.write(f"**Analysis:** {risk_analysis}")
+    
+    # Critical Risks
+    critical_risks = risk.get("critical_risks", [])
+    if critical_risks:
+        with st.expander("🚨 Critical Risks", expanded=True):
+            for r in critical_risks:
+                severity = r.get("severity", 0)
+                issue = r.get("issue", "")
+                impact = r.get("impact", "")
+                st.error(f"**{r.get('category', '').upper()}** (Severity: {severity}/10)")
+                st.write(f"Issue: {issue}")
+                st.write(f"Impact: {impact}")
+                if r.get("mitigation"):
+                    st.success(f"💡 Mitigation: {r['mitigation']}")
+                st.divider()
+    
+    # Opportunity Analysis
+    st.write("### 🎯 Opportunity Analysis")
+    opp = llm_data.get("opportunity_analysis", {})
+    
+    if opp.get("analysis"):
+        st.write(opp["analysis"])
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        key_strengths = opp.get("key_strengths", [])
+        if key_strengths:
+            with st.expander("💪 Key Strengths", expanded=True):
+                for strength in key_strengths:
+                    st.success(f"✅ **{strength.get('area', '')}**")
+                    st.write(strength.get("description", ""))
+                    if strength.get("competitive_advantage"):
+                        st.info(f"🎯 {strength['competitive_advantage']}")
+    
+    with col2:
+        growth = opp.get("growth_potential", {})
+        if growth:
+            with st.expander("📈 Growth Potential", expanded=True):
+                if growth.get("market_size"):
+                    st.write(f"**Market:** {growth['market_size']}")
+                if growth.get("scalability"):
+                    st.write(f"**Scalability:** {growth['scalability']}")
+                if growth.get("timeline"):
+                    st.write(f"**Timeline:** {growth['timeline']}")
+    
+    # Financial Health
+    st.write("### 💰 Financial Health")
+    fin = llm_data.get("financial_health", {})
+    
+    if fin.get("analysis"):
+        st.write(fin["analysis"])
+    
+    key_metrics = fin.get("key_metrics", {})
+    if key_metrics:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if key_metrics.get("revenue_trend"):
+                st.metric("Revenue Trend", key_metrics["revenue_trend"])
+        with col2:
+            if key_metrics.get("profitability"):
+                st.metric("Profitability", key_metrics["profitability"])
+        with col3:
+            if key_metrics.get("cash_position"):
+                st.metric("Cash Position", key_metrics["cash_position"])
+    
+    # Concerns and Positives
+    col1, col2 = st.columns(2)
+    with col1:
+        concerns = fin.get("concerns", [])
+        if concerns:
+            with st.expander("⚠️ Concerns"):
+                for concern in concerns:
+                    st.warning(f"• {concern}")
+    
+    with col2:
+        positives = fin.get("positives", [])
+        if positives:
+            with st.expander("✅ Positives"):
+                for positive in positives:
+                    st.success(f"• {positive}")
+    
+    # Next Steps
+    next_steps = llm_data.get("next_steps", [])
+    if next_steps:
+        st.write("### 📝 Recommended Next Steps")
+        for i, step in enumerate(next_steps, 1):
+            if isinstance(step, dict):
+                priority = step.get("priority", "medium")
+                priority_emoji = "🔴" if priority == "high" else "🟡" if priority == "medium" else "🟢"
+                st.write(f"{i}. {priority_emoji} **{step.get('category', '').title()}:** {step.get('action', '')}")
+                if step.get("rationale"):
+                    st.caption(f"   ↳ {step['rationale']}")
+            else:
+                st.write(f"{i}. {step}")
+    
+    # Raw Analysis (collapsible)
+    with st.expander("🔍 View Raw Analysis JSON"):
+        st.json(analysis)
+        st.write("### 📝 Recommended Next Steps")
+        for i, step in enumerate(analysis["next_steps"], 1):
+            st.write(f"{i}. {step}")
+    
+    # Raw Analysis (collapsible)
+    with st.expander("🔍 View Raw Analysis JSON"):
+        st.json(analysis)
 
 
 def display_comprehensive_analysis(analysis: dict, result: dict):

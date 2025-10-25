@@ -11,6 +11,9 @@ Architecture:
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 import json
+import os
+
+from openai import AsyncOpenAI
 
 from utils.logger import setup_logger
 from services.document_analysis import DocumentAnalyzer
@@ -22,9 +25,9 @@ logger = setup_logger(__name__)
 class LLMConfig:
     """Configuration for LLM providers"""
     provider: str = "openai"  # openai, anthropic, azure
-    model: str = "gpt-4"
-    temperature: float = 0.7
-    max_tokens: int = 2000
+    model: str = "gpt-4o-mini"  # gpt-4o-mini supports JSON mode and is cost-effective
+    temperature: float = 0.3  # Lower temperature for more consistent analysis
+    max_tokens: int = 3000  # More tokens for detailed analysis
     api_key: Optional[str] = None
 
 
@@ -58,10 +61,40 @@ class InvestmentAnalystAgent:
         Returns:
             Dict containing structured analysis and LLM insights
         """
+        from pathlib import Path
+        from utils.config import settings
+        
         logger.info(f"LLM Agent analyzing: {filename}")
         
+        # Find the file (it might be in a subdirectory)
+        upload_dir = Path(settings.UPLOAD_DIR)
+        file_path = None
+        
+        # First try direct path
+        direct_path = upload_dir / filename
+        if direct_path.exists():
+            file_path = direct_path
+        else:
+            # Search recursively in subdirectories
+            for found_file in upload_dir.rglob(filename):
+                if found_file.is_file():
+                    file_path = found_file
+                    break
+        
+        if file_path is None:
+            raise FileNotFoundError(f"File not found: {filename}")
+        
+        logger.info(f"Found file at: {file_path}")
+        
         # Step 1: Pre-process with DocumentAnalyzer (keyword-based)
-        structured_data = self.analyzer.analyze_document(filename, "comprehensive")
+        analyzer_result = self.analyzer.analyze_document(file_path, "comprehensive")
+        
+        # Check if analysis was successful
+        if not analyzer_result.get("success"):
+            raise Exception(f"Document analysis failed: {analyzer_result.get('error')}")
+        
+        # Extract the actual analysis data
+        structured_data = analyzer_result.get("analysis", {})
         
         # Step 2: Build LLM prompt from structured data
         prompt = self._build_analysis_prompt(structured_data, focus_areas)
@@ -88,11 +121,38 @@ class InvestmentAnalystAgent:
         """
         
         # Extract key components from structured analysis
-        red_flags = structured_data.get("red_flags", [])
-        positive_signals = structured_data.get("positive_signals", [])
+        red_flags_data = structured_data.get("red_flags", {})
+        positive_signals_data = structured_data.get("positive_signals", {})
         financial_metrics = structured_data.get("financial_metrics", {})
         entities = structured_data.get("entities", {})
         recommendation = structured_data.get("recommendation", {})
+        
+        # Flatten red flags from categories to list
+        red_flags = []
+        if isinstance(red_flags_data, dict):
+            flags_by_category = red_flags_data.get("flags_by_category", {})
+            for category, flags_list in flags_by_category.items():
+                if isinstance(flags_list, list):
+                    for flag in flags_list:
+                        flag['category'] = category  # Add category to each flag
+                        red_flags.append(flag)
+        
+        # Flatten positive signals from categories to list
+        positive_signals = []
+        if isinstance(positive_signals_data, dict):
+            signals_by_category = positive_signals_data.get("signals_by_category", {})
+            for category, signals_list in signals_by_category.items():
+                if isinstance(signals_list, list):
+                    for signal in signals_list:
+                        signal['category'] = category  # Add category to each signal
+                        positive_signals.append(signal)
+        
+        # Safely get confidence as float
+        confidence = recommendation.get('confidence', 0)
+        try:
+            confidence = float(confidence) if confidence else 0.0
+        except (ValueError, TypeError):
+            confidence = 0.0
         
         # Build prompt sections
         prompt_parts = [
@@ -105,7 +165,7 @@ class InvestmentAnalystAgent:
             "## Document Summary",
             f"- Analysis Type: Comprehensive Due Diligence",
             f"- Preliminary Recommendation: {recommendation.get('action', 'N/A')}",
-            f"- Confidence Score: {recommendation.get('confidence', 0):.1%}",
+            f"- Confidence Score: {confidence:.1%}",
             "",
         ]
         
@@ -192,74 +252,229 @@ class InvestmentAnalystAgent:
         
         # ANALYSIS REQUEST
         prompt_parts.extend([
-            "## 📊 Analysis Required",
+            "---",
             "",
-            "Please provide:",
+            "## 📊 Investment Analysis Request",
             "",
-            "1. **Risk Assessment** (0-10 scale)",
-            "   - Evaluate each identified red flag",
-            "   - Assess severity and likelihood of impact",
-            "   - Identify any missing risk factors not caught by keywords",
+            "Based on the pre-processed data above, provide a comprehensive investment analysis.",
             "",
-            "2. **Opportunity Analysis**",
-            "   - Evaluate strength of positive signals",
-            "   - Identify competitive advantages",
-            "   - Assess growth potential based on metrics",
+            "### Output Requirements:",
             "",
-            "3. **Financial Health Evaluation**",
-            "   - Analyze extracted financial metrics in context",
-            "   - Identify trends (positive/negative)",
-            "   - Flag any concerning financial patterns",
+            "**CRITICAL**: Respond with ONLY a valid JSON object. No markdown, no code blocks, no text outside JSON.",
             "",
-            "4. **Investment Recommendation**",
-            "   - Clear recommendation: BUY / HOLD / AVOID",
-            "   - Confidence level (0-100%)",
-            "   - Key conditions or milestones to watch",
-            "   - Suggested investment structure (if applicable)",
+            "Required JSON structure:",
             "",
-            "5. **Due Diligence Next Steps**",
-            "   - Additional documents to request",
-            "   - Key questions for management",
-            "   - Areas requiring third-party verification",
+            "```json",
+            "{",
+            '  "risk_assessment": {',
+            '    "score": 5,  // 0-10 scale (0=no risk, 10=critical risk)',
+            '    "analysis": "Detailed risk evaluation...",',
+            '    "critical_risks": [',
+            '      {',
+            '        "category": "legal/financial/operational/market",',
+            '        "issue": "Specific risk description",',
+            '        "severity": 8,  // 0-10',
+            '        "impact": "Potential impact if realized",',
+            '        "mitigation": "Recommended mitigation strategy"',
+            '      }',
+            '    ],',
+            '    "risk_factors_missed": ["Additional risks not caught by keyword scan"]',
+            '  },',
+            '  "opportunity_analysis": {',
+            '    "analysis": "Overall opportunity evaluation...",',
+            '    "key_strengths": [',
+            '      {',
+            '        "area": "Market position/Technology/Team/etc",',
+            '        "description": "Specific strength",',
+            '        "competitive_advantage": "Why this matters"',
+            '      }',
+            '    ],',
+            '    "growth_potential": {',
+            '      "market_size": "TAM/SAM assessment",',
+            '      "scalability": "Scalability evaluation",',
+            '      "timeline": "Expected growth trajectory"',
+            '    }',
+            '  },',
+            '  "financial_health": {',
+            '    "analysis": "Financial health overview...",',
+            '    "key_metrics": {',
+            '      "revenue_trend": "Growing/Stable/Declining",',
+            '      "profitability": "Assessment based on extracted metrics",',
+            '      "cash_position": "Runway and burn rate if applicable"',
+            '    },',
+            '    "concerns": ["Any financial red flags"],',
+            '    "positives": ["Financial strengths"]',
+            '  },',
+            '  "recommendation": {',
+            '    "action": "BUY/HOLD/AVOID",  // Clear recommendation',
+            '    "confidence": 75,  // 0-100%',
+            '    "reasoning": "Detailed reasoning for recommendation...",',
+            '    "conditions": [',
+            '      "Key conditions or milestones to watch",',
+            '      "Deal-breaker factors"',
+            '    ],',
+            '    "suggested_structure": "Investment structure if applicable (e.g., convertible note, equity)",',
+            '    "target_valuation": "Suggested valuation range if applicable"',
+            '  },',
+            '  "next_steps": [',
+            '    {',
+            '      "category": "documentation/verification/questions",',
+            '      "action": "Specific action to take",',
+            '      "priority": "high/medium/low",',
+            '      "rationale": "Why this step is needed"',
+            '    }',
+            '  ],',
+            '  "executive_summary": "2-3 sentence investment thesis"',
+            "}",
+            "```",
             "",
-            "Format your response as structured JSON for easy parsing.",
+            "### Analysis Guidelines:",
+            "",
+            "1. **Be Evidence-Based**: Reference specific data points from the sections above",
+            "2. **Be Balanced**: Acknowledge both risks and opportunities",
+            "3. **Be Actionable**: Provide specific, implementable next steps",
+            "4. **Be Professional**: Suitable for presentation to investment committee",
+            "5. **Be Honest**: If data is insufficient, state clearly",
+            "",
+            "### Key Questions to Address:",
+            "",
+            "- Do the red flags represent deal-breakers or manageable risks?",
+            "- Do the positive signals indicate sustainable competitive advantage?",
+            "- Are the financial metrics consistent with the company's stage and industry?",
+            "- What additional information is critical for making a final decision?",
+            "- What is the risk/reward profile of this opportunity?",
         ])
         
         return "\n".join(prompt_parts)
     
     async def _get_llm_insights(self, prompt: str) -> Dict[str, Any]:
         """
-        Get insights from LLM provider.
+        Get insights from LLM provider (OpenAI GPT-4).
         
-        TODO: Implement actual LLM API calls tomorrow
-        - OpenAI GPT-4
-        - Anthropic Claude
-        - Azure OpenAI
+        Returns structured JSON with investment analysis including:
+        - Risk assessment with severity scores
+        - Opportunity evaluation
+        - Financial health analysis
+        - Investment recommendation with confidence
+        - Due diligence next steps
         """
         
-        # For now, return placeholder
-        logger.warning("LLM API not yet configured - returning placeholder")
+        # Get API key from config or environment
+        api_key = self.config.api_key or os.getenv("OPENAI_API_KEY")
         
-        return {
-            "status": "placeholder",
-            "message": "LLM integration pending - API keys needed",
-            "risk_assessment": {
-                "score": 0,
-                "analysis": "LLM analysis will appear here"
-            },
-            "opportunity_analysis": {
-                "analysis": "LLM analysis will appear here"
-            },
-            "financial_health": {
-                "analysis": "LLM analysis will appear here"
-            },
-            "recommendation": {
-                "action": "PENDING",
-                "confidence": 0,
-                "reasoning": "LLM recommendation will appear here"
-            },
-            "next_steps": []
-        }
+        if not api_key:
+            logger.warning("No OpenAI API key found - returning placeholder")
+            return {
+                "status": "error",
+                "message": "OpenAI API key not configured. Set OPENAI_API_KEY environment variable.",
+                "risk_assessment": {
+                    "score": 0,
+                    "analysis": "API key required for LLM analysis"
+                },
+                "opportunity_analysis": {
+                    "analysis": "API key required for LLM analysis"
+                },
+                "financial_health": {
+                    "analysis": "API key required for LLM analysis"
+                },
+                "recommendation": {
+                    "action": "PENDING",
+                    "confidence": 0,
+                    "reasoning": "Configure API key to enable LLM-powered analysis"
+                },
+                "next_steps": []
+            }
+        
+        try:
+            # Initialize OpenAI client with context manager for proper cleanup
+            async with AsyncOpenAI(api_key=api_key) as client:
+                # System prompt for investment analyst persona
+                system_prompt = """You are a highly experienced investment analyst with 15+ years in venture capital and private equity. 
+You specialize in due diligence, risk assessment, and investment recommendations.
+
+Your analysis is:
+- Thorough and evidence-based
+- Balanced (acknowledge both risks and opportunities)
+- Actionable (provide specific next steps)
+- Professional (suitable for investment committee presentation)
+
+CRITICAL: Respond ONLY with valid JSON. No markdown, no code blocks, no explanations outside the JSON structure."""
+
+                # Call OpenAI API
+                logger.info(f"Calling OpenAI API with model: {self.config.model}")
+                
+                response = await client.chat.completions.create(
+                    model=self.config.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=self.config.temperature,
+                    max_tokens=self.config.max_tokens,
+                    response_format={"type": "json_object"}  # Ensure JSON response
+                )
+                
+                # Parse JSON response
+                result_text = response.choices[0].message.content
+                result = json.loads(result_text)
+                
+                logger.info("Successfully received LLM analysis")
+                
+                # Validate and normalize response structure
+                normalized_result = {
+                    "status": "success",
+                    "model_used": self.config.model,
+                    "risk_assessment": result.get("risk_assessment", {
+                        "score": 0,
+                        "analysis": "No risk assessment provided"
+                    }),
+                    "opportunity_analysis": result.get("opportunity_analysis", {
+                        "analysis": "No opportunity analysis provided"
+                    }),
+                    "financial_health": result.get("financial_health", {
+                        "analysis": "No financial health evaluation provided"
+                    }),
+                    "recommendation": result.get("recommendation", {
+                        "action": "HOLD",
+                        "confidence": 50,
+                        "reasoning": "Insufficient data for clear recommendation"
+                    }),
+                    "next_steps": result.get("next_steps", [])
+                }
+                
+                return normalized_result
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse LLM response as JSON: {e}")
+            return {
+                "status": "error",
+                "message": f"LLM returned invalid JSON: {str(e)}",
+                "risk_assessment": {"score": 0, "analysis": "Parse error"},
+                "opportunity_analysis": {"analysis": "Parse error"},
+                "financial_health": {"analysis": "Parse error"},
+                "recommendation": {
+                    "action": "ERROR",
+                    "confidence": 0,
+                    "reasoning": "Failed to parse LLM response"
+                },
+                "next_steps": []
+            }
+            
+        except Exception as e:
+            logger.error(f"OpenAI API error: {e}")
+            return {
+                "status": "error",
+                "message": f"API error: {str(e)}",
+                "risk_assessment": {"score": 0, "analysis": str(e)},
+                "opportunity_analysis": {"analysis": str(e)},
+                "financial_health": {"analysis": str(e)},
+                "recommendation": {
+                    "action": "ERROR",
+                    "confidence": 0,
+                    "reasoning": f"API call failed: {str(e)}"
+                },
+                "next_steps": []
+            }
     
     def _merge_insights(
         self, 
@@ -272,12 +487,19 @@ class InvestmentAnalystAgent:
         Returns comprehensive analysis combining both approaches.
         """
         
+        # Extract red flags and positive signals counts safely
+        red_flags_data = structured_data.get("red_flags", {})
+        positive_signals_data = structured_data.get("positive_signals", {})
+        
+        red_flags_count = red_flags_data.get("total_flags", 0) if isinstance(red_flags_data, dict) else 0
+        positive_signals_count = positive_signals_data.get("total_signals", 0) if isinstance(positive_signals_data, dict) else 0
+        
         return {
             "analysis_type": "llm_powered",
             "structured_analysis": {
                 "method": "keyword_based",
-                "red_flags_count": len(structured_data.get("red_flags", [])),
-                "positive_signals_count": len(structured_data.get("positive_signals", [])),
+                "red_flags_count": red_flags_count,
+                "positive_signals_count": positive_signals_count,
                 "preliminary_recommendation": structured_data.get("recommendation", {})
             },
             "llm_analysis": llm_insights,
@@ -296,7 +518,33 @@ class InvestmentAnalystAgent:
         Generate a preview of the LLM prompt without calling the API.
         Useful for debugging and understanding what data the LLM will see.
         """
-        structured_data = self.analyzer.analyze_document(filename, "comprehensive")
+        from pathlib import Path
+        from utils.config import settings
+        
+        # Find the file (it might be in a subdirectory)
+        upload_dir = Path(settings.UPLOAD_DIR)
+        file_path = None
+        
+        # First try direct path
+        direct_path = upload_dir / filename
+        if direct_path.exists():
+            file_path = direct_path
+        else:
+            # Search recursively in subdirectories
+            for found_file in upload_dir.rglob(filename):
+                if found_file.is_file():
+                    file_path = found_file
+                    break
+        
+        if file_path is None:
+            raise FileNotFoundError(f"File not found: {filename}")
+        
+        analyzer_result = self.analyzer.analyze_document(file_path, "comprehensive")
+        
+        if not analyzer_result.get("success"):
+            raise Exception(f"Document analysis failed: {analyzer_result.get('error')}")
+        
+        structured_data = analyzer_result.get("analysis", {})
         return self._build_analysis_prompt(structured_data)
 
 

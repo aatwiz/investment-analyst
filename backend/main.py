@@ -11,6 +11,10 @@ from pathlib import Path
 import shutil
 from datetime import datetime
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from api.routes import files, analysis, modeling, reports, llm_analysis
 from utils.config import settings
