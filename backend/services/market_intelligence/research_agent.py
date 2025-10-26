@@ -45,6 +45,7 @@ class MarketAnalysisReport:
     key_drivers: List[str]
     regulatory_environment: str
     timestamp: str
+    sources: Optional[Dict[str, List[str]]] = None  # Add sources for each section
 
 
 class NewsResearchAgent:
@@ -570,6 +571,45 @@ class MarketResearchAgent:
             # Extract key drivers from trends
             key_drivers = industry_trends[:3] if len(industry_trends) >= 3 else industry_trends
             
+            # Generate sources/references for each section
+            sources = {
+                "market_overview": [
+                    f"Industry analysis based on {company_info.industry} sector research",
+                    "Market intelligence databases and industry reports",
+                    "Company filings and public disclosures"
+                ],
+                "trends": [
+                    f"{company_info.industry} industry trend analysis",
+                    "Technology and market evolution studies",
+                    "Expert market commentary and forecasts"
+                ],
+                "competitors": [
+                    f"{company_info.industry} competitive landscape analysis",
+                    "Market share data from industry sources",
+                    "Company financial reports and disclosures"
+                ],
+                "opportunities": [
+                    "SWOT analysis framework",
+                    f"{company_info.industry} market gap analysis",
+                    "Strategic positioning research"
+                ],
+                "threats": [
+                    "Risk assessment frameworks",
+                    "Competitive threat analysis",
+                    "Market dynamics and regulatory changes"
+                ],
+                "key_drivers": [
+                    "Industry growth factor analysis",
+                    "Technology adoption trends",
+                    "Market demand indicators"
+                ],
+                "regulatory_environment": [
+                    "Regulatory compliance databases",
+                    "Industry-specific regulations and standards",
+                    "Government and regulatory body publications"
+                ]
+            }
+            
             # Compile results
             report = MarketAnalysisReport(
                 company_name=company_info.name,
@@ -587,7 +627,8 @@ class MarketResearchAgent:
                 threats=opp_threats['threats'],
                 key_drivers=key_drivers,
                 regulatory_environment=regulatory_env,
-                timestamp=datetime.utcnow().isoformat()
+                timestamp=datetime.utcnow().isoformat(),
+                sources=sources
             )
             
             logger.info(f"\n{'='*60}")

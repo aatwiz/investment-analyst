@@ -57,6 +57,7 @@ class MarketAnalysisResponse(BaseModel):
     regulatory_environment: str
     timestamp: str
     report_text: Optional[str] = None
+    sources: Optional[Dict[str, List[str]]] = None  # Add sources
 
 
 class IndustryTrendsRequest(BaseModel):
@@ -149,7 +150,8 @@ async def analyze_market(request: MarketAnalysisRequest):
             key_drivers=report.key_drivers,
             regulatory_environment=report.regulatory_environment,
             timestamp=report.timestamp,
-            report_text=agent.format_report(report)
+            report_text=agent.format_report(report),
+            sources=report.sources
         )
         
         logger.info(f"Market analysis completed for {request.company_name}")

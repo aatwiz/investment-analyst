@@ -129,7 +129,7 @@ def main():
     """Main application"""
     
     # Header
-    st.markdown('<h1 class="main-header">📊 Investment Analyst AI Agent</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Investment Analyst AI Agent</h1>', unsafe_allow_html=True)
     
     # Check backend health
     backend_status = check_backend_health()
@@ -141,7 +141,7 @@ def main():
         
         page = st.radio(
             "Go to",
-            ["🏠 Home", "� Deal Sourcing", "🌐 Market Intelligence", "�📤 Upload Documents", "📁 Document Library", "📊 Analysis", "💰 Financial Modeling", "📝 Generate Reports"],
+            ["Home", "� Deal Sourcing", "Market Intelligence", "�Upload Documents", "Document Library", "Analysis", "Financial Modeling", "📝 Generate Reports"],
             label_visibility="collapsed"
         )
         
@@ -149,9 +149,9 @@ def main():
         
         # Status indicator
         if backend_status:
-            st.success("✅ Backend Connected")
+            st.success("Backend Connected")
         else:
-            st.error("❌ Backend Offline")
+            st.error("Backend Offline")
             st.info("Start backend: `uvicorn backend.main:app --reload`")
         
         st.divider()
@@ -161,26 +161,26 @@ def main():
         try:
             files_data = get_uploaded_files()
             if files_data:
-                st.metric("📄 Total Documents", files_data.get("count", 0))
+                st.metric("Total Documents", files_data.get("count", 0))
             else:
-                st.metric("📄 Total Documents", 0)
+                st.metric("Total Documents", 0)
         except:
-            st.metric("📄 Total Documents", "N/A")
+            st.metric("Total Documents", "N/A")
     
     # Main content based on selected page
-    if page == "🏠 Home":
+    if page == "Home":
         show_home_page()
     elif page == "� Deal Sourcing":
         show_deal_sourcing_page()
-    elif page == "🌐 Market Intelligence":
+    elif page == "Market Intelligence":
         show_market_intelligence_page()
-    elif page == "�📤 Upload Documents":
+    elif page == "�Upload Documents":
         show_upload_page()
-    elif page == "📁 Document Library":
+    elif page == "Document Library":
         show_library_page()
-    elif page == "📊 Analysis":
+    elif page == "Analysis":
         show_analysis_page()
-    elif page == "💰 Financial Modeling":
+    elif page == "Financial Modeling":
         show_modeling_page()
     elif page == "📝 Generate Reports":
         show_reports_page()
@@ -189,7 +189,7 @@ def main():
 def show_home_page():
     """Home page with overview"""
     
-    st.write("### 🎯 Welcome to Your AI-Powered Investment Analysis Platform")
+    st.write("### Welcome to Your AI-Powered Investment Analysis Platform")
     st.write("Accelerate due diligence, financial modeling, and investment memo drafting with AI.")
     
     # Feature overview
@@ -198,7 +198,7 @@ def show_home_page():
     with col1:
         st.markdown("""
         <div class="feature-card">
-            <h3>📄 Document Analysis</h3>
+            <h3>Document Analysis</h3>
             <p>Upload and analyze legal, financial, and market documents automatically.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -206,7 +206,7 @@ def show_home_page():
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <h3>💡 AI Insights</h3>
+            <h3>AI Insights</h3>
             <p>Extract key insights, identify red flags, and get comprehensive summaries.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -214,7 +214,7 @@ def show_home_page():
     with col3:
         st.markdown("""
         <div class="feature-card">
-            <h3>📊 Financial Modeling</h3>
+            <h3>Financial Modeling</h3>
             <p>Generate projections, run scenarios, and create professional reports.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -222,7 +222,7 @@ def show_home_page():
     st.divider()
     
     # Quick start guide
-    st.write("### 🚀 Quick Start Guide")
+    st.write("### Quick Start Guide")
     
     with st.expander("1️⃣ Upload Documents", expanded=True):
         st.write("""
@@ -262,7 +262,7 @@ def show_home_page():
     st.write("### 🧩 MVP Features")
     
     features = [
-        {"icon": "🔍", "title": "AI-Powered Deal Sourcing", "status": "✅ Live"},
+        {"icon": "🔍", "title": "AI-Powered Deal Sourcing", "status": "Live"},
         {"icon": "📄", "title": "Automated DD Document Analysis", "status": "Phase 2"},
         {"icon": "🌐", "title": "Market & Competitive Analysis", "status": "Phase 3"},
         {"icon": "📊", "title": "Financial Modeling & Scenarios", "status": "Phase 4"},
@@ -276,7 +276,7 @@ def show_home_page():
         with col2:
             st.write(f"**{feature['title']}**")
         with col3:
-            if feature['status'] == "✅ Live":
+            if feature['status'] == "Live":
                 st.success(feature['status'])
             elif feature['status'] == "Phase 1":
                 st.success(feature['status'])
@@ -287,11 +287,11 @@ def show_home_page():
 def show_deal_sourcing_page():
     """Deal sourcing page - Feature 1"""
     
-    st.write("### 🔍 AI-Powered Deal Sourcing")
+    st.write("### AI-Powered Deal Sourcing")
     st.write("Automatically discover and qualify investment opportunities from multiple platforms")
     
     # Tabs for different functions
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔎 Scrape Deals", "📋 Deal Pipeline", "🎯 Qualified Deals", "📊 Statistics", "📄 Daily Report"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔎 Scrape Deals", "Deal Pipeline", "Qualified Deals", "Statistics", "Daily Report"])
     
     with tab1:
         show_scrape_deals_tab()
@@ -317,7 +317,7 @@ def show_scrape_deals_tab():
     # Platform selection
     st.write("**Data Source:**")
     
-    st.info("🚀 **TechCrunch** - Real funding announcements from curated tech journalism. Includes 8 major deals totaling $6.8B (Anthropic, Scale AI, Ramp, Perplexity AI, Brex, Vercel, Runway, Harvey)")
+    st.info("**TechCrunch** - Real funding announcements from curated tech journalism. Includes 8 major deals totaling $6.8B (Anthropic, Scale AI, Ramp, Perplexity AI, Brex, Vercel, Runway, Harvey)")
     
     techcrunch = st.checkbox("TechCrunch (automatically selected)", value=True, disabled=True, help="Real funding data - currently the only source")
     
@@ -381,7 +381,7 @@ def show_scrape_deals_tab():
     col1, col2, col3 = st.columns([2, 1, 2])
     
     with col2:
-        if st.button("🚀 Start Scraping", type="primary", use_container_width=True, disabled=len(platforms) == 0):
+        if st.button("Start Scraping", type="primary", use_container_width=True, disabled=len(platforms) == 0):
             if not platforms:
                 st.error("Please select at least one platform")
             else:
@@ -425,7 +425,7 @@ def scrape_deals(platforms, industries, locations, stages, min_funding, qualify,
                 result = response.json()
                 
                 if result.get("success"):
-                    st.success("✅ Scraping completed successfully!")
+                    st.success("Scraping completed successfully!")
                     
                     # Display summary
                     summary = result.get("summary", {})
@@ -448,12 +448,12 @@ def scrape_deals(platforms, industries, locations, stages, min_funding, qualify,
                     # Top deals
                     deals = result.get("deals", [])
                     if deals:
-                        st.write("### 🏆 Top Deals")
+                        st.write("### Top Deals")
                         display_deals_table(deals[:10])
                     
                     # Platform breakdown
                     if summary.get("platforms"):
-                        with st.expander("📊 Platform Breakdown"):
+                        with st.expander("Platform Breakdown"):
                             for platform, count in summary["platforms"].items():
                                 st.write(f"- **{platform}**: {count} deals")
                     
@@ -500,7 +500,7 @@ def show_deal_pipeline_tab():
         limit = st.selectbox("Results per page", [20, 50, 100], index=1)
     
     # Fetch button
-    if st.button("🔍 Fetch Deals", use_container_width=True):
+    if st.button("Fetch Deals", use_container_width=True):
         fetch_deals(platform_filter, industry_filter, min_funding_filter, limit)
 
 
@@ -564,7 +564,7 @@ def show_qualified_deals_tab():
     with col3:
         limit = st.selectbox("Results", [10, 20, 50], index=1)
     
-    if st.button("🎯 Show Qualified Deals", use_container_width=True):
+    if st.button("Show Qualified Deals", use_container_width=True):
         fetch_qualified_deals(min_score, recommendations, limit)
 
 
@@ -612,14 +612,14 @@ def show_deal_stats_tab():
     
     st.write("#### Pipeline Statistics")
     
-    if st.button("📊 Refresh Stats", use_container_width=True):
+    if st.button("Refresh Stats", use_container_width=True):
         fetch_deal_stats()
 
 
 def show_daily_report_tab():
     """Tab for generating daily potential deals reports"""
     
-    st.write("#### 📄 Daily Potential Deals Report")
+    st.write("#### Daily Potential Deals Report")
     st.write("Generate a comprehensive report of investment opportunities matching your criteria")
     
     st.write("")
@@ -696,11 +696,11 @@ def show_daily_report_tab():
             )
         
         # Generate button
-        submitted = st.form_submit_button("🔍 Generate Report", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("Generate Report", type="primary", use_container_width=True)
     
     if submitted:
         if not sectors or not stages:
-            st.error("⚠️ Please select at least one sector and one stage")
+            st.error("Please select at least one sector and one stage")
             return
         
         # Store criteria in session state
@@ -740,7 +740,7 @@ def generate_daily_report(criteria):
                 
                 if result.get("success"):
                     st.session_state.last_report = result
-                    st.success(f"✅ Found {result['deal_count']} deals matching your criteria!")
+                    st.success(f"Found {result['deal_count']} deals matching your criteria!")
                     st.rerun()  # Force refresh to show the report
                 else:
                     st.error("Failed to generate report")
@@ -760,7 +760,7 @@ def display_daily_report(report_data):
     criteria = report_data.get("criteria", {})
     
     # Header
-    st.write("### 📊 Generated Report")
+    st.write("### Generated Report")
     
     # Summary
     col1, col2, col3 = st.columns(3)
@@ -801,7 +801,7 @@ def display_daily_report(report_data):
         return
     
     for i, deal in enumerate(deals, 1):
-        with st.expander(f"🔍 {i}. {deal['company_name']} - {deal['stage']}", expanded=(i <= 3)):
+        with st.expander(f"{i}. {deal['company_name']} - {deal['stage']}", expanded=(i <= 3)):
             # Header info
             col1, col2, col3 = st.columns(3)
             
@@ -837,7 +837,7 @@ def display_daily_report(report_data):
             # Key Signals
             if deal.get('key_signals'):
                 st.write("")
-                st.write("**🎯 Key Signals:**")
+                st.write("**Key Signals:**")
                 for signal in deal['key_signals']:
                     st.success(f"• {signal}")
             
@@ -849,7 +849,7 @@ def display_daily_report(report_data):
             # Risk Flags
             if deal.get('risk_flags'):
                 st.write("")
-                st.write("**⚠️ Risk Flags:**")
+                st.write("**Risk Flags:**")
                 for risk in deal['risk_flags']:
                     st.warning(f"• {risk}")
             
@@ -860,7 +860,7 @@ def display_daily_report(report_data):
                     st.caption(f"📰 Sources: {', '.join(deal['sources'])}")
             with col2:
                 if deal.get('website'):
-                    st.markdown(f"[🔗 Visit Website]({deal['website']})")
+                    st.markdown(f"[Visit Website]({deal['website']})")
 
 
 def download_report(format_type, criteria):
@@ -889,7 +889,7 @@ def download_report(format_type, criteria):
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document" if format_type == "docx" else "text/html" if format_type == "html" else "text/plain"
                 )
                 
-                st.success(f"✅ Report generated! Click above to download.")
+                st.success(f"Report generated! Click above to download.")
             else:
                 st.error(f"Failed to generate report: {response.status_code}")
         
@@ -947,7 +947,7 @@ def fetch_deal_stats():
                                 st.write(f"- {industry}: {count}")
                     
                     if stats.get("by_location"):
-                        with st.expander("🌍 Top Locations"):
+                        with st.expander("Top Locations"):
                             for location, count in list(stats["by_location"].items())[:15]:
                                 st.write(f"- {location}: {count}")
                 else:
@@ -1065,14 +1065,14 @@ def display_qualified_deals_table(deals):
             with col1:
                 strengths = deal.get("strengths", [])
                 if strengths:
-                    st.write("**✅ Strengths:**")
+                    st.write("**Strengths:**")
                     for strength in strengths:
                         st.success(f"• {strength}")
             
             with col2:
                 concerns = deal.get("concerns", [])
                 if concerns:
-                    st.write("**⚠️ Concerns:**")
+                    st.write("**Concerns:**")
                     for concern in concerns:
                         st.warning(f"• {concern}")
             
@@ -1084,19 +1084,19 @@ def display_qualified_deals_table(deals):
             
             # Links
             if deal_data.get("source_url"):
-                st.write(f"[🔗 View on {deal_data.get('source', 'Platform')}]({deal_data['source_url']})")
+                st.write(f"[View on {deal_data.get('source', 'Platform')}]({deal_data['source_url']})")
 
 
 def show_market_intelligence_page():
     """Market Intelligence & Competitive Analysis page"""
     
-    st.write("# 🌐 Market Intelligence & Competitive Analysis")
+    st.write("# Market Intelligence & Competitive Analysis")
     st.write("Generate comprehensive market research and competitive insights")
     
     st.write("")
     
     # Main tabs
-    tab1, tab2, tab3 = st.tabs(["📊 Market Analysis", "🏢 Competitor Analysis", "📈 Industry Trends"])
+    tab1, tab2, tab3 = st.tabs(["Market Analysis", "Competitor Analysis", "Industry Trends"])
     
     with tab1:
         show_market_analysis_tab()
@@ -1110,7 +1110,7 @@ def show_market_intelligence_page():
 
 def show_market_analysis_tab():
     """Market analysis tab"""
-    st.write("### 📊 Comprehensive Market Analysis")
+    st.write("### Comprehensive Market Analysis")
     st.write("Generate detailed market research for companies and industries")
     
     st.write("")
@@ -1150,11 +1150,11 @@ def show_market_analysis_tab():
         with col5:
             include_regulatory = st.checkbox("Include Regulatory Analysis", value=True)
         
-        submitted = st.form_submit_button("🔍 Generate Market Analysis", type="primary")
+        submitted = st.form_submit_button("Generate Market Analysis", type="primary")
     
     if submitted:
         if not company_name or not industry:
-            st.error("⚠️ Please provide both company name and industry")
+            st.error("Please provide both company name and industry")
             return
         
         with st.spinner(f"🔎 Analyzing market for {company_name}..."):
@@ -1175,11 +1175,11 @@ def show_market_analysis_tab():
                 if response.status_code == 200:
                     data = response.json()
                     
-                    st.success(f"✅ Market analysis completed for {company_name}")
+                    st.success(f"Market analysis completed for {company_name}")
                     
                     # Market Overview
                     st.write("---")
-                    st.write("### 📈 Market Overview")
+                    st.write("### Market Overview")
                     
                     # Key Metrics
                     col1, col2, col3, col4 = st.columns(4)
@@ -1204,17 +1204,29 @@ def show_market_analysis_tab():
                     st.write("")
                     st.info(data['market_overview'])
                     
+                    # Show sources for market overview
+                    if data.get('sources') and data['sources'].get('market_overview'):
+                        with st.expander("📚 Sources & References"):
+                            for i, source in enumerate(data['sources']['market_overview'], 1):
+                                st.caption(f"{i}. {source}")
+                    
                     # Trends
                     if include_trends and data.get('trends'):
                         st.write("---")
-                        st.write("### 📊 Key Trends")
+                        st.write("### Key Trends")
                         for trend in data['trends']:
                             st.write(f"• {trend}")
+                        
+                        # Show sources for trends
+                        if data.get('sources') and data['sources'].get('trends'):
+                            with st.expander("📚 Sources & References"):
+                                for i, source in enumerate(data['sources']['trends'], 1):
+                                    st.caption(f"{i}. {source}")
                     
                     # Competitive Position
                     if include_competitors:
                         st.write("---")
-                        st.write("### 🏆 Competitive Position")
+                        st.write("### Competitive Position")
                         
                         # Competitor Market Shares
                         if data['metrics'].get('market_shares'):
@@ -1235,38 +1247,68 @@ def show_market_analysis_tab():
                             st.write("**Key Competitors:**")
                             for competitor in data['competitors']:
                                 st.write(f"• {competitor}")
+                        
+                        # Show sources for competitors
+                        if data.get('sources') and data['sources'].get('competitors'):
+                            with st.expander("📚 Sources & References"):
+                                for i, source in enumerate(data['sources']['competitors'], 1):
+                                    st.caption(f"{i}. {source}")
                     
                     # Opportunities & Threats
                     col1, col2 = st.columns(2)
                     
                     with col1:
                         st.write("---")
-                        st.write("### ✅ Opportunities")
+                        st.write("### Opportunities")
                         for opp in data['opportunities']:
                             st.write(f"• {opp}")
+                        
+                        # Show sources for opportunities
+                        if data.get('sources') and data['sources'].get('opportunities'):
+                            with st.expander("📚 Sources & References"):
+                                for i, source in enumerate(data['sources']['opportunities'], 1):
+                                    st.caption(f"{i}. {source}")
                     
                     with col2:
                         st.write("---")
-                        st.write("### ⚠️ Threats")
+                        st.write("### Threats")
                         for threat in data['threats']:
                             st.write(f"• {threat}")
+                        
+                        # Show sources for threats
+                        if data.get('sources') and data['sources'].get('threats'):
+                            with st.expander("📚 Sources & References"):
+                                for i, source in enumerate(data['sources']['threats'], 1):
+                                    st.caption(f"{i}. {source}")
                     
                     # Key Drivers
                     st.write("---")
-                    st.write("### 🚀 Key Growth Drivers")
+                    st.write("### Key Growth Drivers")
                     for driver in data['key_drivers']:
                         st.write(f"• {driver}")
+                    
+                    # Show sources for key drivers
+                    if data.get('sources') and data['sources'].get('key_drivers'):
+                        with st.expander("📚 Sources & References"):
+                            for i, source in enumerate(data['sources']['key_drivers'], 1):
+                                st.caption(f"{i}. {source}")
                     
                     # Regulatory
                     if include_regulatory:
                         st.write("---")
                         st.write("### ⚖️ Regulatory Environment")
                         st.write(data['regulatory_environment'])
+                        
+                        # Show sources for regulatory environment
+                        if data.get('sources') and data['sources'].get('regulatory_environment'):
+                            with st.expander("📚 Sources & References"):
+                                for i, source in enumerate(data['sources']['regulatory_environment'], 1):
+                                    st.caption(f"{i}. {source}")
                     
                     # Full Report
                     if data.get('report_text'):
                         st.write("---")
-                        with st.expander("📄 View Full Report"):
+                        with st.expander("View Full Report"):
                             st.markdown(data['report_text'])
                     
                 else:
@@ -1280,7 +1322,7 @@ def show_market_analysis_tab():
 
 def show_competitor_analysis_tab():
     """Competitor analysis tab"""
-    st.write("### 🏢 Competitor Analysis")
+    st.write("### Competitor Analysis")
     st.write("Identify and analyze key competitors in your market")
     
     st.write("")
@@ -1298,11 +1340,11 @@ def show_competitor_analysis_tab():
             help="Specify the industry"
         )
         
-        submitted = st.form_submit_button("🔍 Analyze Competitors", type="primary")
+        submitted = st.form_submit_button("Analyze Competitors", type="primary")
     
     if submitted:
         if not company_name or not industry:
-            st.error("⚠️ Please provide both company name and industry")
+            st.error("Please provide both company name and industry")
             return
         
         with st.spinner(f"🔎 Analyzing competitors for {company_name}..."):
@@ -1319,12 +1361,12 @@ def show_competitor_analysis_tab():
                 if response.status_code == 200:
                     data = response.json()
                     
-                    st.success(f"✅ Competitor analysis completed")
+                    st.success(f"Competitor analysis completed")
                     
                     st.write("---")
                     
                     # Market Shares Table
-                    st.write("### 📊 Market Share Distribution")
+                    st.write("### Market Share Distribution")
                     
                     import pandas as pd
                     df = pd.DataFrame([
@@ -1339,7 +1381,7 @@ def show_competitor_analysis_tab():
                     
                     # Competitive Position
                     st.write("---")
-                    st.write("### 🏆 Competitive Position Analysis")
+                    st.write("### Competitive Position Analysis")
                     st.info(data['competitive_position'])
                 
                 else:
@@ -1351,7 +1393,7 @@ def show_competitor_analysis_tab():
 
 def show_industry_trends_tab():
     """Industry trends tab"""
-    st.write("### 📈 Industry Trends Analysis")
+    st.write("### Industry Trends Analysis")
     st.write("Discover current trends and market dynamics")
     
     st.write("")
@@ -1371,11 +1413,11 @@ def show_industry_trends_tab():
             help="How many trends to retrieve"
         )
         
-        submitted = st.form_submit_button("🔍 Get Industry Trends", type="primary")
+        submitted = st.form_submit_button("Get Industry Trends", type="primary")
     
     if submitted:
         if not industry:
-            st.error("⚠️ Please provide an industry")
+            st.error("Please provide an industry")
             return
         
         with st.spinner(f"🔎 Analyzing trends in {industry}..."):
@@ -1392,7 +1434,7 @@ def show_industry_trends_tab():
                 if response.status_code == 200:
                     data = response.json()
                     
-                    st.success(f"✅ Found {len(data['trends'])} key trends in {industry}")
+                    st.success(f"Found {len(data['trends'])} key trends in {industry}")
                     
                     st.write("---")
                     st.write(f"### 🔥 Top Trends in {industry}")
@@ -1412,7 +1454,7 @@ def show_industry_trends_tab():
 def show_upload_page():
     """Upload documents page"""
     
-    st.write("### 📤 Upload Documents")
+    st.write("### Upload Documents")
     st.write("Upload investment-related documents for analysis")
     
     st.write("")  # Spacing
@@ -1443,7 +1485,7 @@ def show_upload_page():
     
     # File uploader - clean design without wrapper box
     uploaded_files = st.file_uploader(
-        "📁 Choose files to upload",
+        "Choose files to upload",
         type=['pdf', 'docx', 'doc', 'xlsx', 'xls', 'csv', 'txt', 'pptx', 'ppt', 'jpg', 'jpeg', 'png'],
         accept_multiple_files=True,
         help="Drag and drop files here or click to browse\n\nSupported: PDF, DOCX, XLSX, PPTX, CSV, TXT, Images (up to 100MB per file)",
@@ -1452,7 +1494,7 @@ def show_upload_page():
     
     if uploaded_files:
         st.write("")  # Spacing
-        st.info(f"📋 **{len(uploaded_files)} file(s) selected**")
+        st.info(f"**{len(uploaded_files)} file(s) selected**")
         
         # Show files in a clean format
         for idx, file in enumerate(uploaded_files, 1):
@@ -1463,15 +1505,15 @@ def show_upload_page():
         col1, col2, col3 = st.columns([1, 1, 3])
         
         with col1:
-            if st.button("📤 Upload Files", type="primary", use_container_width=True):
+            if st.button("Upload Files", type="primary", use_container_width=True):
                 with st.spinner("Uploading files..."):
                     result = upload_files(uploaded_files, category_map[category])
                     
                     if result and result.get("success"):
-                        st.success(f"✅ Successfully uploaded {result.get('uploaded_count', 0)} files!")
+                        st.success(f"Successfully uploaded {result.get('uploaded_count', 0)} files!")
                         
                         if result.get("errors"):
-                            st.warning(f"⚠️ {len(result['errors'])} file(s) failed to upload")
+                            st.warning(f"{len(result['errors'])} file(s) failed to upload")
                             with st.expander("View errors"):
                                 for error in result['errors']:
                                     st.error(f"{error['filename']}: {error['error']}")
@@ -1479,7 +1521,7 @@ def show_upload_page():
                         st.error("Failed to upload files. Please try again.")
         
         with col2:
-            if st.button("🗑️ Clear", use_container_width=True):
+            if st.button("Clear", use_container_width=True):
                 st.rerun()
     
     st.divider()
@@ -1488,8 +1530,8 @@ def show_upload_page():
     with st.expander("ℹ️ Supported File Types & Guidelines"):
         st.write("""
         **Supported File Types:**
-        - 📄 **Documents:** PDF, DOCX, DOC, TXT
-        - 📊 **Spreadsheets:** XLSX, XLS, CSV
+        - **Documents:** PDF, DOCX, DOC, TXT
+        - **Spreadsheets:** XLSX, XLS, CSV
         - 📽️ **Presentations:** PPTX, PPT
         - 🖼️ **Images:** JPG, JPEG, PNG (with OCR)
         
@@ -1504,7 +1546,7 @@ def show_upload_page():
 def show_library_page():
     """Document library page"""
     
-    st.write("### 📁 Document Library")
+    st.write("### Document Library")
     st.write("View and manage uploaded documents")
     
     # Filter options
@@ -1538,7 +1580,7 @@ def show_library_page():
                 col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
                 
                 with col1:
-                    st.write(f"📄 **{file['filename']}**")
+                    st.write(f"**{file['filename']}**")
                 
                 with col2:
                     size_mb = file['size'] / (1024 * 1024)
@@ -1553,7 +1595,7 @@ def show_library_page():
                         with st.spinner("Deleting file..."):
                             result = delete_file(file['filename'])
                             if result and result.get("success"):
-                                st.success("✅ File deleted successfully!")
+                                st.success("File deleted successfully!")
                                 st.rerun()
                             else:
                                 st.error("Failed to delete file")
@@ -1566,7 +1608,7 @@ def show_library_page():
 def show_analysis_page():
     """Analysis page with document analysis features"""
     
-    st.write("### 📊 Document Analysis")
+    st.write("### Document Analysis")
     st.write("Analyze uploaded documents for investment insights")
     
     # Get uploaded files
@@ -1597,10 +1639,10 @@ def show_analysis_page():
         
         # Show LLM info if selected
         if analysis_type == "llm_powered":
-            st.info("🤖 **LLM-Powered Analysis**: Uses AI to provide deep insights, risk assessment, and investment recommendations. Pre-processes with keyword analysis then applies GPT-4 reasoning.")
+            st.info("**LLM-Powered Analysis**: Uses AI to provide deep insights, risk assessment, and investment recommendations. Pre-processes with keyword analysis then applies GPT-4 reasoning.")
     
     # Analyze button
-    if st.button("🔍 Analyze Document", type="primary", use_container_width=True):
+    if st.button("Analyze Document", type="primary", use_container_width=True):
         with st.spinner(f"Analyzing {selected_file}..."):
             try:
                 # Route to appropriate endpoint based on analysis type
@@ -1623,7 +1665,7 @@ def show_analysis_page():
                     is_success = result.get("success") or result.get("status") == "success"
                     
                     if is_success:
-                        st.success("✅ Analysis completed successfully!")
+                        st.success("Analysis completed successfully!")
                         
                         # Display results based on analysis type
                         analysis = result.get("analysis", {})
@@ -1648,24 +1690,24 @@ def show_analysis_page():
     
     # Quick actions
     st.divider()
-    st.write("### 🚀 Quick Actions")
+    st.write("### Quick Actions")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("📄 Extract Content", use_container_width=True):
+        if st.button("Extract Content", use_container_width=True):
             with st.spinner("Extracting content..."):
                 try:
                     response = requests.get(f"{API_BASE_URL}/analysis/extract/{selected_file}")
                     if response.status_code == 200:
                         result = response.json()
-                        st.success("✅ Content extracted!")
+                        st.success("Content extracted!")
                         
-                        with st.expander("📄 Extracted Text", expanded=True):
+                        with st.expander("Extracted Text", expanded=True):
                             st.text_area("Content", result.get("text", ""), height=300)
                         
                         if result.get("tables"):
-                            with st.expander(f"📊 Tables ({result.get('table_count', 0)})"):
+                            with st.expander(f"Tables ({result.get('table_count', 0)})"):
                                 st.json(result.get("tables"))
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
@@ -1706,11 +1748,11 @@ def display_llm_analysis(analysis: dict, result: dict):
     # Executive Summary
     exec_summary = llm_data.get("executive_summary") or llm_data.get("risk_assessment", {}).get("analysis", "")
     if exec_summary:
-        st.write("### 📋 Executive Summary")
+        st.write("### Executive Summary")
         st.info(exec_summary)
     
     # Investment Recommendation
-    st.write("### 💡 Investment Recommendation")
+    st.write("### Investment Recommendation")
     rec_data = llm_data.get("recommendation", {})
     recommendation = rec_data.get("action", "N/A")
     confidence = rec_data.get("confidence", 0)
@@ -1735,7 +1777,7 @@ def display_llm_analysis(analysis: dict, result: dict):
         st.write(f"**Reasoning:** {reasoning}")
     
     # Risk Assessment
-    st.write("### ⚠️ Risk Assessment")
+    st.write("### Risk Assessment")
     risk = llm_data.get("risk_assessment", {})
     
     col1, col2 = st.columns([1, 3])
@@ -1761,11 +1803,11 @@ def display_llm_analysis(analysis: dict, result: dict):
                 st.write(f"Issue: {issue}")
                 st.write(f"Impact: {impact}")
                 if r.get("mitigation"):
-                    st.success(f"💡 Mitigation: {r['mitigation']}")
+                    st.success(f"Mitigation: {r['mitigation']}")
                 st.divider()
     
     # Opportunity Analysis
-    st.write("### 🎯 Opportunity Analysis")
+    st.write("### Opportunity Analysis")
     opp = llm_data.get("opportunity_analysis", {})
     
     if opp.get("analysis"):
@@ -1777,15 +1819,15 @@ def display_llm_analysis(analysis: dict, result: dict):
         if key_strengths:
             with st.expander("💪 Key Strengths", expanded=True):
                 for strength in key_strengths:
-                    st.success(f"✅ **{strength.get('area', '')}**")
+                    st.success(f"**{strength.get('area', '')}**")
                     st.write(strength.get("description", ""))
                     if strength.get("competitive_advantage"):
-                        st.info(f"🎯 {strength['competitive_advantage']}")
+                        st.info(f"{strength['competitive_advantage']}")
     
     with col2:
         growth = opp.get("growth_potential", {})
         if growth:
-            with st.expander("📈 Growth Potential", expanded=True):
+            with st.expander("Growth Potential", expanded=True):
                 if growth.get("market_size"):
                     st.write(f"**Market:** {growth['market_size']}")
                 if growth.get("scalability"):
@@ -1794,7 +1836,7 @@ def display_llm_analysis(analysis: dict, result: dict):
                     st.write(f"**Timeline:** {growth['timeline']}")
     
     # Financial Health
-    st.write("### 💰 Financial Health")
+    st.write("### Financial Health")
     fin = llm_data.get("financial_health", {})
     
     if fin.get("analysis"):
@@ -1818,14 +1860,14 @@ def display_llm_analysis(analysis: dict, result: dict):
     with col1:
         concerns = fin.get("concerns", [])
         if concerns:
-            with st.expander("⚠️ Concerns"):
+            with st.expander("Concerns"):
                 for concern in concerns:
                     st.warning(f"• {concern}")
     
     with col2:
         positives = fin.get("positives", [])
         if positives:
-            with st.expander("✅ Positives"):
+            with st.expander("Positives"):
                 for positive in positives:
                     st.success(f"• {positive}")
     
@@ -1844,14 +1886,14 @@ def display_llm_analysis(analysis: dict, result: dict):
                 st.write(f"{i}. {step}")
     
     # Raw Analysis (collapsible)
-    with st.expander("🔍 View Raw Analysis JSON"):
+    with st.expander("View Raw Analysis JSON"):
         st.json(analysis)
         st.write("### 📝 Recommended Next Steps")
         for i, step in enumerate(analysis["next_steps"], 1):
             st.write(f"{i}. {step}")
     
     # Raw Analysis (collapsible)
-    with st.expander("🔍 View Raw Analysis JSON"):
+    with st.expander("View Raw Analysis JSON"):
         st.json(analysis)
 
 
@@ -1902,10 +1944,10 @@ def display_comprehensive_analysis(analysis: dict, result: dict):
                         st.warning(f"**{flag['keyword']}**")
                         st.caption(flag.get('context', '')[:200])
     else:
-        st.success("✅ No red flags detected!")
+        st.success("No red flags detected!")
     
     # Positive Signals
-    st.write("### ✅ Positive Signals")
+    st.write("### Positive Signals")
     positive = analysis.get("positive_signals", {})
     
     col1, col2 = st.columns(2)
@@ -1925,7 +1967,7 @@ def display_comprehensive_analysis(analysis: dict, result: dict):
                         st.caption(signal.get('context', '')[:200])
     
     # Financial Metrics
-    st.write("### 💰 Financial Metrics")
+    st.write("### Financial Metrics")
     financial = analysis.get("financial_metrics", {})
     
     col1, col2, col3 = st.columns(3)
@@ -1942,7 +1984,7 @@ def display_comprehensive_analysis(analysis: dict, result: dict):
             st.write(", ".join(financial.get("sample_values", [])[:10]))
     
     # Recommendation
-    st.write("### 🎯 Investment Recommendation")
+    st.write("### Investment Recommendation")
     recommendation = analysis.get("recommendation", {})
     
     rec_text = recommendation.get("recommendation", "N/A")
@@ -2005,7 +2047,7 @@ def display_red_flags_analysis(analysis: dict):
                     with st.expander(f"{idx+1}. {flag['keyword']} - {flag.get('severity', 'low').upper()}"):
                         st.write(flag.get('context', ''))
     else:
-        st.success("✅ No red flags detected in this document!")
+        st.success("No red flags detected in this document!")
 
 
 def display_financial_analysis(analysis: dict):
@@ -2036,7 +2078,7 @@ def display_financial_analysis(analysis: dict):
     if analysis.get("has_financial_statements"):
         st.write("**Financial Statements Detected:**")
         for sheet in analysis.get("financial_sheets", []):
-            with st.expander(f"📊 {sheet['name']}"):
+            with st.expander(f"{sheet['name']}"):
                 st.write(f"- Rows: {sheet['rows']}")
                 st.write(f"- Columns: {sheet['columns']}")
                 st.write(f"- Column Names: {', '.join(sheet['column_names'][:10])}")
@@ -2045,14 +2087,14 @@ def display_financial_analysis(analysis: dict):
 def show_modeling_page():
     """Financial modeling page - Feature 4: Financial Modeling & Scenario Planning"""
     
-    st.write("### 💰 Financial Modeling & Scenario Planning")
+    st.write("### Financial Modeling & Scenario Planning")
     st.write("Generate financial projections, run what-if scenarios, and export to Excel")
     
     # Tabs for different workflows
     tab1, tab2, tab3, tab4 = st.tabs([
-        "📊 Build Model", 
-        "📈 Scenario Analysis", 
-        "📁 Templates",
+        "Build Model", 
+        "Scenario Analysis", 
+        "Templates",
         "📥 Import from Documents"
     ])
     
@@ -2175,7 +2217,7 @@ def show_build_model_tab():
                         st.session_state['current_model'] = model_data
                         st.session_state['model_name'] = model_name
                         
-                        st.success("✅ Model generated successfully!")
+                        st.success("Model generated successfully!")
                         st.rerun()
                     else:
                         st.error(f"Error: {response.text}")
@@ -2276,7 +2318,7 @@ def show_build_model_tab():
                         st.error(f"Export error: {str(e)}")
             
             with export_col2:
-                if st.button("📄 Download CSV", use_container_width=True):
+                if st.button("Download CSV", use_container_width=True):
                     csv = df.to_csv(index=False)
                     st.download_button(
                         label="💾 Save CSV File",
@@ -2296,7 +2338,7 @@ def show_scenario_analysis_tab():
     
     # Check if we have a base model
     if 'current_model' not in st.session_state:
-        st.warning("⚠️ Please generate a base model first in the 'Build Model' tab")
+        st.warning("Please generate a base model first in the 'Build Model' tab")
         return
     
     model = st.session_state['current_model']
@@ -2329,7 +2371,7 @@ def show_scenario_analysis_tab():
                 if response.ok:
                     result = response.json()
                     st.session_state['scenario_results'] = result
-                    st.success("✅ Scenario analysis complete!")
+                    st.success("Scenario analysis complete!")
                     st.rerun()
                 else:
                     st.error(f"Error: {response.text}")
@@ -2414,7 +2456,7 @@ def show_model_templates_tab():
                         
                         if st.button(f"Use Template", key=f"template_{template['id']}"):
                             st.session_state['selected_template'] = template
-                            st.info(f"✅ Template '{template['name']}' selected. Switch to 'Build Model' tab to configure.")
+                            st.info(f"Template '{template['name']}' selected. Switch to 'Build Model' tab to configure.")
                     
                     st.divider()
         
@@ -2466,7 +2508,7 @@ def show_import_financials_tab():
                             extracted = result.get('extracted_data', {})
                             inferred = result.get('inferred_assumptions', {})
                             
-                            st.success("✅ Data extracted successfully!")
+                            st.success("Data extracted successfully!")
                             
                             # Display extracted data
                             st.write("**Extracted Financial Data**")
@@ -2479,9 +2521,9 @@ def show_import_financials_tab():
                             st.json(inferred)
                             
                             # Option to use these assumptions
-                            if st.button("📊 Build Model from This Data"):
+                            if st.button("Build Model from This Data"):
                                 st.session_state['imported_assumptions'] = inferred
-                                st.info("✅ Assumptions imported. Switch to 'Build Model' tab to review and generate projections.")
+                                st.info("Assumptions imported. Switch to 'Build Model' tab to review and generate projections.")
                         
                         else:
                             st.error(f"Error: {response.text}")
@@ -2519,7 +2561,7 @@ def show_reports_page():
         deck_templates = []
     
     # Tabs for different report types
-    tab1, tab2, tab3 = st.tabs(["📄 Investment Memo", "📽️ Pitch Deck", "📚 Templates"])
+    tab1, tab2, tab3 = st.tabs(["Investment Memo", "📽️ Pitch Deck", "Templates"])
     
     with tab1:
         st.write("#### Generate Investment Memo")
@@ -2583,7 +2625,7 @@ def show_reports_page():
                 selected_template_idx = template_names.index(selected_template_name)
                 selected_memo_template = memo_templates[selected_template_idx]
                 
-                st.caption(f"📋 {selected_memo_template['description']}")
+                st.caption(f"{selected_memo_template['description']}")
                 
                 with st.expander("Template Sections"):
                     for section in selected_memo_template["sections"]:
@@ -2610,7 +2652,7 @@ def show_reports_page():
             include_financials = st.checkbox("Financial Projections", value=True, key="memo_include_financials")
         
         # Generate button
-        if st.button("🎯 Generate Investment Memo", type="primary", key="generate_memo_btn"):
+        if st.button("Generate Investment Memo", type="primary", key="generate_memo_btn"):
             if not selected_company or not selected_company.get("name"):
                 st.error("Please enter company name")
             else:
@@ -2647,7 +2689,7 @@ def show_reports_page():
                         
                         if response.status_code == 200:
                             # Success - provide download
-                            st.success("✅ Investment memo generated successfully!")
+                            st.success("Investment memo generated successfully!")
                             
                             # Download button
                             company_name_safe = selected_company["name"].replace(" ", "_")
@@ -2659,7 +2701,7 @@ def show_reports_page():
                                 key="download_memo"
                             )
                             
-                            st.info("💡 Open the downloaded file in Microsoft Word or Google Docs")
+                            st.info("Open the downloaded file in Microsoft Word or Google Docs")
                         else:
                             st.error(f"Failed to generate memo: {response.text}")
                     
@@ -2729,7 +2771,7 @@ def show_reports_page():
                 selected_template_idx = template_names.index(selected_template_name)
                 selected_deck_template = deck_templates[selected_template_idx]
                 
-                st.caption(f"📋 {selected_deck_template['description']}")
+                st.caption(f"{selected_deck_template['description']}")
                 
                 with st.expander("Template Slides"):
                     for i, slide in enumerate(selected_deck_template["slides"], 1):
@@ -2749,7 +2791,7 @@ def show_reports_page():
             include_financials_deck = st.checkbox("Financial Projections", value=True, key="deck_include_financials")
         
         # Generate button
-        if st.button("🎯 Generate Pitch Deck", type="primary", key="generate_deck_btn"):
+        if st.button("Generate Pitch Deck", type="primary", key="generate_deck_btn"):
             if not selected_company or not selected_company.get("name"):
                 st.error("Please enter company name")
             else:
@@ -2784,7 +2826,7 @@ def show_reports_page():
                         
                         if response.status_code == 200:
                             # Success - provide download
-                            st.success("✅ Pitch deck generated successfully!")
+                            st.success("Pitch deck generated successfully!")
                             
                             # Download button
                             company_name_safe = selected_company["name"].replace(" ", "_")
@@ -2807,10 +2849,10 @@ def show_reports_page():
         st.write("#### Available Templates")
         
         # Show memo templates
-        st.write("**📄 Investment Memo Templates**")
+        st.write("**Investment Memo Templates**")
         if memo_templates:
             for template in memo_templates:
-                with st.expander(f"📋 {template['name']}"):
+                with st.expander(f"{template['name']}"):
                     st.write(f"**Description:** {template['description']}")
                     st.write("**Sections:**")
                     for section in template["sections"]:
@@ -2824,7 +2866,7 @@ def show_reports_page():
         st.write("**📽️ Pitch Deck Templates**")
         if deck_templates:
             for template in deck_templates:
-                with st.expander(f"📊 {template['name']}"):
+                with st.expander(f"{template['name']}"):
                     st.write(f"**Description:** {template['description']}")
                     st.write(f"**Slides:** {len(template['slides'])} slides")
                     st.write("**Content:**")
@@ -2834,7 +2876,7 @@ def show_reports_page():
             st.info("No deck templates available")
         
         st.write("---")
-        st.info("💡 **Tip:** Templates use AI to generate relevant content based on your company data and integrated data from other features.")
+        st.info("**Tip:** Templates use AI to generate relevant content based on your company data and integrated data from other features.")
 
 
 if __name__ == "__main__":
