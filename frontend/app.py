@@ -2498,19 +2498,343 @@ def show_import_financials_tab():
 
 
 def show_reports_page():
-    """Reports page - placeholder for Phase 5"""
+    """Reports generation page - Feature 5"""
     
-    st.write("### 📝 Generate Reports")
-    st.info("🚧 Report generation features will be available in Phase 5")
+    st.write("### 📝 Generate Investment Reports")
+    st.write("Generate professional investment memos and pitch decks with AI-powered content")
     
-    st.write("""
-    **Coming Soon:**
-    - 📄 Investment memos
-    - 📽️ Pitch decks
-    - 📋 Due diligence summaries
-    - 📊 Executive summaries
-    - 🎨 Custom templates
-    """)
+    # Get available templates
+    try:
+        templates_response = requests.get(f"{API_BASE_URL}/reports/templates")
+        if templates_response.status_code == 200:
+            templates_data = templates_response.json()
+            memo_templates = templates_data.get("templates", {}).get("memos", [])
+            deck_templates = templates_data.get("templates", {}).get("decks", [])
+        else:
+            memo_templates = []
+            deck_templates = []
+    except Exception as e:
+        st.error(f"Could not load templates: {str(e)}")
+        memo_templates = []
+        deck_templates = []
+    
+    # Tabs for different report types
+    tab1, tab2, tab3 = st.tabs(["📄 Investment Memo", "📽️ Pitch Deck", "📚 Templates"])
+    
+    with tab1:
+        st.write("#### Generate Investment Memo")
+        st.write("Create a comprehensive investment memo document (DOCX)")
+        
+        # Company selection
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Try to get companies from session state or API
+            companies = []
+            if "qualified_companies" in st.session_state and st.session_state.qualified_companies:
+                companies = st.session_state.qualified_companies
+            
+            if companies:
+                company_names = [c.get("name", f"Company {i}") for i, c in enumerate(companies)]
+                selected_company_name = st.selectbox(
+                    "Select Company",
+                    options=["Enter manually..."] + company_names,
+                    key="memo_company_select"
+                )
+                
+                if selected_company_name != "Enter manually...":
+                    selected_company_idx = company_names.index(selected_company_name)
+                    selected_company = companies[selected_company_idx]
+                else:
+                    selected_company = None
+            else:
+                selected_company = None
+                st.info("No qualified companies found. Please enter company details manually.")
+            
+            # Manual company entry
+            if selected_company is None:
+                company_name = st.text_input("Company Name", value="", key="memo_company_name")
+                company_description = st.text_area("Company Description", value="", key="memo_company_desc")
+                company_stage = st.selectbox(
+                    "Stage",
+                    ["Pre-Seed", "Seed", "Series A", "Series B", "Series C", "Series D+", "Growth"],
+                    key="memo_company_stage"
+                )
+                company_industry = st.text_input("Industry", value="", key="memo_company_industry")
+                
+                selected_company = {
+                    "name": company_name,
+                    "description": company_description,
+                    "stage": company_stage,
+                    "industry": company_industry
+                }
+        
+        with col2:
+            # Template selection
+            if memo_templates:
+                template_names = [t["name"] for t in memo_templates]
+                template_descs = [t["description"] for t in memo_templates]
+                
+                selected_template_name = st.selectbox(
+                    "Select Template",
+                    options=template_names,
+                    key="memo_template"
+                )
+                selected_template_idx = template_names.index(selected_template_name)
+                selected_memo_template = memo_templates[selected_template_idx]
+                
+                st.caption(f"📋 {selected_memo_template['description']}")
+                
+                with st.expander("Template Sections"):
+                    for section in selected_memo_template["sections"]:
+                        st.write(f"✓ {section}")
+            else:
+                selected_memo_template = {"id": "standard", "name": "Standard"}
+        
+        # Analyst and firm details
+        col3, col4 = st.columns(2)
+        with col3:
+            analyst_name = st.text_input("Analyst Name", value="Investment Analyst", key="memo_analyst")
+        with col4:
+            firm_name = st.text_input("Firm Name", value="Investment Firm", key="memo_firm")
+        
+        # Optional data inclusion
+        st.write("**Include Additional Data:**")
+        col5, col6, col7 = st.columns(3)
+        
+        with col5:
+            include_deal = st.checkbox("Deal Scoring Data", value=True, key="memo_include_deal")
+        with col6:
+            include_market = st.checkbox("Market Intelligence", value=True, key="memo_include_market")
+        with col7:
+            include_financials = st.checkbox("Financial Projections", value=True, key="memo_include_financials")
+        
+        # Generate button
+        if st.button("🎯 Generate Investment Memo", type="primary", key="generate_memo_btn"):
+            if not selected_company or not selected_company.get("name"):
+                st.error("Please enter company name")
+            else:
+                with st.spinner("Generating investment memo... This may take 30-60 seconds..."):
+                    try:
+                        # Prepare request data
+                        request_data = {
+                            "company_data": selected_company,
+                            "template_type": selected_memo_template["id"],
+                            "analyst_name": analyst_name,
+                            "firm_name": firm_name
+                        }
+                        
+                        # Add optional data if available and selected
+                        if include_deal and "qualification_score" in selected_company:
+                            request_data["deal_data"] = {
+                                "qualification_score": selected_company.get("qualification_score"),
+                                "strengths": selected_company.get("strengths", []),
+                                "concerns": selected_company.get("concerns", [])
+                            }
+                        
+                        if include_market and "market_data" in st.session_state:
+                            request_data["market_data"] = st.session_state.market_data
+                        
+                        if include_financials and "financial_projections" in st.session_state:
+                            request_data["financial_model"] = st.session_state.financial_projections
+                        
+                        # Call API
+                        response = requests.post(
+                            f"{API_BASE_URL}/reports/generate-memo",
+                            json=request_data,
+                            timeout=120
+                        )
+                        
+                        if response.status_code == 200:
+                            # Success - provide download
+                            st.success("✅ Investment memo generated successfully!")
+                            
+                            # Download button
+                            company_name_safe = selected_company["name"].replace(" ", "_")
+                            st.download_button(
+                                label="📥 Download Memo (DOCX)",
+                                data=response.content,
+                                file_name=f"Investment_Memo_{company_name_safe}.docx",
+                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                key="download_memo"
+                            )
+                            
+                            st.info("💡 Open the downloaded file in Microsoft Word or Google Docs")
+                        else:
+                            st.error(f"Failed to generate memo: {response.text}")
+                    
+                    except Exception as e:
+                        st.error(f"Error generating memo: {str(e)}")
+    
+    with tab2:
+        st.write("#### Generate Pitch Deck")
+        st.write("Create a professional investor presentation (PPTX)")
+        
+        # Company selection
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Try to get companies from session state
+            companies = []
+            if "qualified_companies" in st.session_state and st.session_state.qualified_companies:
+                companies = st.session_state.qualified_companies
+            
+            if companies:
+                company_names = [c.get("name", f"Company {i}") for i, c in enumerate(companies)]
+                selected_company_name = st.selectbox(
+                    "Select Company",
+                    options=["Enter manually..."] + company_names,
+                    key="deck_company_select"
+                )
+                
+                if selected_company_name != "Enter manually...":
+                    selected_company_idx = company_names.index(selected_company_name)
+                    selected_company = companies[selected_company_idx]
+                else:
+                    selected_company = None
+            else:
+                selected_company = None
+                st.info("No qualified companies found. Please enter company details manually.")
+            
+            # Manual company entry
+            if selected_company is None:
+                company_name = st.text_input("Company Name", value="", key="deck_company_name")
+                company_description = st.text_area("Company Description", value="", key="deck_company_desc")
+                company_stage = st.selectbox(
+                    "Stage",
+                    ["Pre-Seed", "Seed", "Series A", "Series B", "Series C", "Series D+", "Growth"],
+                    key="deck_company_stage"
+                )
+                company_industry = st.text_input("Industry", value="", key="deck_company_industry")
+                funding_amount = st.number_input("Funding Amount ($)", min_value=0, value=1000000, step=100000, key="deck_funding")
+                
+                selected_company = {
+                    "name": company_name,
+                    "description": company_description,
+                    "stage": company_stage,
+                    "industry": company_industry,
+                    "funding_amount": funding_amount
+                }
+        
+        with col2:
+            # Template selection
+            if deck_templates:
+                template_names = [t["name"] for t in deck_templates]
+                
+                selected_template_name = st.selectbox(
+                    "Select Template",
+                    options=template_names,
+                    key="deck_template"
+                )
+                selected_template_idx = template_names.index(selected_template_name)
+                selected_deck_template = deck_templates[selected_template_idx]
+                
+                st.caption(f"📋 {selected_deck_template['description']}")
+                
+                with st.expander("Template Slides"):
+                    for i, slide in enumerate(selected_deck_template["slides"], 1):
+                        st.write(f"{i}. {slide}")
+            else:
+                selected_deck_template = {"id": "standard", "name": "Standard"}
+        
+        # Optional data inclusion
+        st.write("**Include Additional Data:**")
+        col5, col6, col7 = st.columns(3)
+        
+        with col5:
+            include_deal_deck = st.checkbox("Deal Scoring Data", value=True, key="deck_include_deal")
+        with col6:
+            include_market_deck = st.checkbox("Market Intelligence", value=True, key="deck_include_market")
+        with col7:
+            include_financials_deck = st.checkbox("Financial Projections", value=True, key="deck_include_financials")
+        
+        # Generate button
+        if st.button("🎯 Generate Pitch Deck", type="primary", key="generate_deck_btn"):
+            if not selected_company or not selected_company.get("name"):
+                st.error("Please enter company name")
+            else:
+                with st.spinner("Generating pitch deck... This may take 30-60 seconds..."):
+                    try:
+                        # Prepare request data
+                        request_data = {
+                            "company_data": selected_company,
+                            "template_type": selected_deck_template["id"]
+                        }
+                        
+                        # Add optional data if available and selected
+                        if include_deal_deck and "qualification_score" in selected_company:
+                            request_data["deal_data"] = {
+                                "qualification_score": selected_company.get("qualification_score"),
+                                "strengths": selected_company.get("strengths", []),
+                                "concerns": selected_company.get("concerns", [])
+                            }
+                        
+                        if include_market_deck and "market_data" in st.session_state:
+                            request_data["market_data"] = st.session_state.market_data
+                        
+                        if include_financials_deck and "financial_projections" in st.session_state:
+                            request_data["financial_model"] = st.session_state.financial_projections
+                        
+                        # Call API
+                        response = requests.post(
+                            f"{API_BASE_URL}/reports/generate-deck",
+                            json=request_data,
+                            timeout=120
+                        )
+                        
+                        if response.status_code == 200:
+                            # Success - provide download
+                            st.success("✅ Pitch deck generated successfully!")
+                            
+                            # Download button
+                            company_name_safe = selected_company["name"].replace(" ", "_")
+                            st.download_button(
+                                label="📥 Download Pitch Deck (PPTX)",
+                                data=response.content,
+                                file_name=f"Pitch_Deck_{company_name_safe}.pptx",
+                                mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                key="download_deck"
+                            )
+                            
+                            st.info("� Open the downloaded file in Microsoft PowerPoint or Google Slides")
+                        else:
+                            st.error(f"Failed to generate deck: {response.text}")
+                    
+                    except Exception as e:
+                        st.error(f"Error generating deck: {str(e)}")
+    
+    with tab3:
+        st.write("#### Available Templates")
+        
+        # Show memo templates
+        st.write("**📄 Investment Memo Templates**")
+        if memo_templates:
+            for template in memo_templates:
+                with st.expander(f"📋 {template['name']}"):
+                    st.write(f"**Description:** {template['description']}")
+                    st.write("**Sections:**")
+                    for section in template["sections"]:
+                        st.write(f"• {section}")
+        else:
+            st.info("No memo templates available")
+        
+        st.write("---")
+        
+        # Show deck templates
+        st.write("**📽️ Pitch Deck Templates**")
+        if deck_templates:
+            for template in deck_templates:
+                with st.expander(f"📊 {template['name']}"):
+                    st.write(f"**Description:** {template['description']}")
+                    st.write(f"**Slides:** {len(template['slides'])} slides")
+                    st.write("**Content:**")
+                    for i, slide in enumerate(template["slides"], 1):
+                        st.write(f"{i}. {slide}")
+        else:
+            st.info("No deck templates available")
+        
+        st.write("---")
+        st.info("💡 **Tip:** Templates use AI to generate relevant content based on your company data and integrated data from other features.")
 
 
 if __name__ == "__main__":
