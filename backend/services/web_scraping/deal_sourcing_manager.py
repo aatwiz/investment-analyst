@@ -1,26 +1,47 @@
 """
 Deal Sourcing Manager - orchestrates scraping from multiple platforms.
+
+NOTE: Currently using mock data for MVP. Web scraping infrastructure is 
+      preserved for future implementation but not active.
 """
 from typing import Dict, List, Optional, Any
 from loguru import logger
 import asyncio
 from datetime import datetime
 
-from .techcrunch_scraper import TechCrunchScraper
+# Import mock data for MVP
+from services.deals.mock_deals import (
+    get_mock_deals,
+    get_qualified_mock_deals,
+    get_deal_statistics
+)
+
+# Keep scraper imports for future use (commented out for now)
+# from .techcrunch_scraper import TechCrunchScraper
 
 
 class DealSourcingManager:
     """
     Manages deal sourcing from multiple platforms.
     
-    Currently using TechCrunch for real, curated funding data.
+    MVP MODE: Using curated mock data based on real startups.
+    Web scraping architecture is preserved for future implementation.
     """
     
-    def __init__(self):
-        """Initialize platform scrapers."""
-        self.scrapers = {
-            'techcrunch': TechCrunchScraper(),  # Real funding data from TechCrunch
-        }
+    def __init__(self, use_mock_data=True):
+        """
+        Initialize platform scrapers.
+        
+        Args:
+            use_mock_data: If True, use mock data. If False, use web scraping (future)
+        """
+        self.use_mock_data = use_mock_data
+        self.scrapers = {}
+        
+        # Scraping infrastructure ready for future activation
+        # self.scrapers = {
+        #     'techcrunch': TechCrunchScraper(),
+        # }
     
     async def scrape_all_platforms(
         self,
@@ -30,13 +51,37 @@ class DealSourcingManager:
         """
         Scrape deals from multiple platforms concurrently.
         
+        MVP MODE: Returns mock data instead of web scraping.
+        
         Args:
-            platforms: List of platform names to scrape (default: all)
-            filters: Common filters to apply across platforms
+            platforms: List of platform names to scrape (ignored in mock mode)
+            filters: Filters to apply (industry, stage, min_funding, location)
             
         Returns:
-            Aggregated list of deals from all platforms
+            List of deals (mock data for MVP, will be real scraping data in future)
         """
+        if self.use_mock_data:
+            logger.info("Using mock data for MVP (web scraping disabled)")
+            
+            # Extract filters
+            industry = filters.get('industries', [None])[0] if filters and 'industries' in filters else None
+            stage = filters.get('stages', [None])[0] if filters and 'stages' in filters else None
+            min_funding = filters.get('min_funding') if filters else None
+            location = filters.get('locations', [None])[0] if filters and 'locations' in filters else None
+            
+            # Get mock deals with filters
+            deals = get_mock_deals(
+                industry=industry,
+                stage=stage,
+                min_funding=min_funding,
+                location=location,
+                limit=30
+            )
+            
+            logger.info(f"Returned {len(deals)} mock deals")
+            return deals
+        
+        # Original web scraping logic (for future use)
         if platforms is None:
             platforms = list(self.scrapers.keys())
         

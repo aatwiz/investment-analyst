@@ -389,13 +389,16 @@ class MarketResearchAgent:
             
             content = response.choices[0].message.content
             
-            # Parse metrics
+            # Parse metrics - default values
             metrics = {
                 'market_size': 50.0,
                 'growth_rate': 8.5,
                 'market_position': 3,
                 'yoy_growth': 2.5
             }
+            
+            # Enhanced parsing to handle various formats
+            import re
             
             for line in content.split('\n'):
                 line = line.strip()
@@ -404,18 +407,25 @@ class MarketResearchAgent:
                     key = key.strip().lower()
                     value = value.strip()
                     
-                    try:
-                        if 'market_size' in key:
-                            metrics['market_size'] = float(value)
-                        elif 'growth_rate' in key:
-                            metrics['growth_rate'] = float(value)
-                        elif 'market_position' in key:
-                            metrics['market_position'] = int(value)
-                        elif 'yoy_growth' in key:
-                            metrics['yoy_growth'] = float(value)
-                    except ValueError:
-                        continue
+                    # Extract numeric value using regex (handles formats like "3500.0 billion", "$3.5T", etc.)
+                    numeric_match = re.search(r'([\d,]+\.?\d*)', value.replace(',', ''))
+                    
+                    if numeric_match:
+                        try:
+                            numeric_value = float(numeric_match.group(1))
+                            
+                            if 'market_size' in key:
+                                metrics['market_size'] = numeric_value
+                            elif 'growth_rate' in key:
+                                metrics['growth_rate'] = numeric_value
+                            elif 'market_position' in key:
+                                metrics['market_position'] = int(numeric_value)
+                            elif 'yoy_growth' in key or 'yoy' in key:
+                                metrics['yoy_growth'] = numeric_value
+                        except (ValueError, AttributeError):
+                            continue
             
+            logger.info(f"📊 Parsed metrics: {metrics}")
             return metrics
         
         except Exception as e:

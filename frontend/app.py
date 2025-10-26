@@ -13,7 +13,7 @@ import pandas as pd
 # Page configuration
 st.set_page_config(
     page_title="Investment Analyst AI Agent",
-    page_icon="📊",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -24,6 +24,18 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api/v1")
 # Custom CSS
 st.markdown("""
     <style>
+    /* Maximize content width */
+    .main .block-container {
+        max-width: 95% !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+    
+    /* Better spacing for wide layout */
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+    }
+    
     .main-header {
         font-size: 3rem;
         font-weight: bold;
@@ -141,7 +153,7 @@ def main():
         
         page = st.radio(
             "Go to",
-            ["Home", "� Deal Sourcing", "Market Intelligence", "�Upload Documents", "Document Library", "Analysis", "Financial Modeling", "📝 Generate Reports"],
+            ["Home", "Deal Sourcing", "Market Intelligence", "Upload Documents", "Document Library", "Analysis", "Financial Modeling", "Generate Reports"],
             label_visibility="collapsed"
         )
         
@@ -170,11 +182,11 @@ def main():
     # Main content based on selected page
     if page == "Home":
         show_home_page()
-    elif page == "� Deal Sourcing":
+    elif page == "Deal Sourcing":
         show_deal_sourcing_page()
     elif page == "Market Intelligence":
         show_market_intelligence_page()
-    elif page == "�Upload Documents":
+    elif page == "Upload Documents":
         show_upload_page()
     elif page == "Document Library":
         show_library_page()
@@ -182,106 +194,74 @@ def main():
         show_analysis_page()
     elif page == "Financial Modeling":
         show_modeling_page()
-    elif page == "📝 Generate Reports":
+    elif page == "Generate Reports":
         show_reports_page()
 
 
 def show_home_page():
     """Home page with overview"""
     
-    st.write("### Welcome to Your AI-Powered Investment Analysis Platform")
-    st.write("Accelerate due diligence, financial modeling, and investment memo drafting with AI.")
+    st.markdown("## 🚀Your Investment Copilot")
     
-    # Feature overview
+    st.write("")
+    st.write("")
+    
+    # Navigation buttons in a grid layout
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <h3>Document Analysis</h3>
-            <p>Upload and analyze legal, financial, and market documents automatically.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        if st.button("🔎 Deal Sourcing", use_container_width=True, type="primary"):
+            st.session_state.page = "Deal Sourcing"
+            st.rerun()
+        st.caption("Discover and qualify investment opportunities")
+        
+        st.write("")
+        
+        if st.button("📊 Market Intelligence", use_container_width=True, type="primary"):
+            st.session_state.page = "Market Intelligence"
+            st.rerun()
+        st.caption("Analyze markets and competitive landscape")
     
     with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <h3>AI Insights</h3>
-            <p>Extract key insights, identify red flags, and get comprehensive summaries.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        if st.button("📁 Upload Documents", use_container_width=True, type="primary"):
+            st.session_state.page = "Upload Documents"
+            st.rerun()
+        st.caption("Upload files for due diligence analysis")
+        
+        st.write("")
+        
+        if st.button("📚 Document Library", use_container_width=True, type="primary"):
+            st.session_state.page = "Document Library"
+            st.rerun()
+        st.caption("Browse and manage uploaded documents")
     
     with col3:
-        st.markdown("""
-        <div class="feature-card">
-            <h3>Financial Modeling</h3>
-            <p>Generate projections, run scenarios, and create professional reports.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        if st.button("🔍 Analysis", use_container_width=True, type="primary"):
+            st.session_state.page = "Analysis"
+            st.rerun()
+        st.caption("AI-powered document analysis and insights")
+        
+        st.write("")
+        
+        if st.button("💰 Financial Modeling", use_container_width=True, type="primary"):
+            st.session_state.page = "Financial Modeling"
+            st.rerun()
+        st.caption("Build projections and scenario analysis")
     
+    # Second row
+    st.write("")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        if st.button("📝 Generate Reports", use_container_width=True, type="primary"):
+            st.session_state.page = "Generate Reports"
+            st.rerun()
+        st.caption("Create investment memos and pitch decks")
+    
+    st.write("")
+    st.write("")
     st.divider()
     
-    # Quick start guide
-    st.write("### Quick Start Guide")
-    
-    with st.expander("1️⃣ Upload Documents", expanded=True):
-        st.write("""
-        - Navigate to **Upload Documents** page
-        - Choose document category (Financial, Legal, Market, etc.)
-        - Upload PDF, DOCX, XLSX, PPT, and more
-        - Supports batch upload for multiple files
-        """)
-    
-    with st.expander("2️⃣ Analyze Documents"):
-        st.write("""
-        - Go to **Analysis** page
-        - Select documents to analyze
-        - Choose analysis type (Summary, Key Points, Red Flags)
-        - Get AI-powered insights instantly
-        """)
-    
-    with st.expander("3️⃣ Build Financial Models"):
-        st.write("""
-        - Visit **Financial Modeling** page
-        - Upload or import financial data
-        - Generate projections and forecasts
-        - Run what-if scenario analyses
-        """)
-    
-    with st.expander("4️⃣ Generate Reports"):
-        st.write("""
-        - Navigate to **Generate Reports**
-        - Select analyzed documents
-        - Choose report type (Memo, Pitch Deck, Summary)
-        - Auto-generate professional investment materials
-        """)
-    
-    st.divider()
-    
-    # MVP Features
-    st.write("### 🧩 MVP Features")
-    
-    features = [
-        {"icon": "🔍", "title": "AI-Powered Deal Sourcing", "status": "Live"},
-        {"icon": "📄", "title": "Automated DD Document Analysis", "status": "Phase 2"},
-        {"icon": "🌐", "title": "Market & Competitive Analysis", "status": "Phase 3"},
-        {"icon": "📊", "title": "Financial Modeling & Scenarios", "status": "Phase 4"},
-        {"icon": "📝", "title": "Investment Memo & Presentation", "status": "Phase 5"},
-    ]
-    
-    for feature in features:
-        col1, col2, col3 = st.columns([1, 6, 2])
-        with col1:
-            st.write(f"## {feature['icon']}")
-        with col2:
-            st.write(f"**{feature['title']}**")
-        with col3:
-            if feature['status'] == "Live":
-                st.success(feature['status'])
-            elif feature['status'] == "Phase 1":
-                st.success(feature['status'])
-            else:
-                st.info(feature['status'])
 
 
 def show_deal_sourcing_page():
@@ -459,7 +439,7 @@ def scrape_deals(platforms, industries, locations, stages, min_funding, qualify,
                     
                     # Top industries
                     if summary.get("top_industries"):
-                        with st.expander("🏭 Top Industries"):
+                        with st.expander("Top Industries"):
                             for industry, count in list(summary["top_industries"].items())[:10]:
                                 st.write(f"- **{industry}**: {count} deals")
                 
@@ -534,7 +514,7 @@ def fetch_deals(platform, industry, min_funding, limit):
                         st.success(f"Found {count} deals")
                         display_deals_table(deals)
                     else:
-                        st.info("📭 No deals found matching your criteria. Try scraping first!")
+                        st.info("No deals found matching your criteria. Try scraping first!")
                 else:
                     st.warning(result.get("message", "No deals available yet"))
             else:
@@ -597,7 +577,7 @@ def fetch_qualified_deals(min_score, recommendations, limit):
                         st.success(f"Found {len(deals)} qualified deals")
                         display_qualified_deals_table(deals)
                     else:
-                        st.info("📭 No qualified deals found. Run scraping with AI qualification enabled!")
+                        st.info("No qualified deals found. Run scraping with AI qualification enabled!")
                 else:
                     st.warning(result.get("message"))
             else:
@@ -782,15 +762,15 @@ def display_daily_report(report_data):
     col1, col2, col3, col4 = st.columns([1, 1, 1, 2])
     
     with col1:
-        if st.button("📥 Export DOCX", use_container_width=True):
+        if st.button("Export DOCX", use_container_width=True):
             download_report("docx", criteria)
     
     with col2:
-        if st.button("📥 Export HTML", use_container_width=True):
+        if st.button("Export HTML", use_container_width=True):
             download_report("html", criteria)
     
     with col3:
-        if st.button("📥 Export TXT", use_container_width=True):
+        if st.button("Export TXT", use_container_width=True):
             download_report("text", criteria)
     
     st.write("---")
@@ -963,54 +943,106 @@ def display_deals_table(deals):
     """Display deals in a formatted table"""
     
     for deal in deals:
-        with st.container():
-            col1, col2, col3 = st.columns([3, 2, 1])
+        # Use card-like container with border
+        st.markdown("---")
+        
+        # Company name and description - full width
+        name = deal.get("deal", {}).get("name") if "deal" in deal else deal.get("name", "Unknown")
+        desc = deal.get("deal", {}).get("description") if "deal" in deal else deal.get("description", "")
+        
+        st.markdown(f"### {name}")
+        st.write(desc)
+        
+        st.write("")  # Add spacing
+        
+        # Metrics row with icons and better layout
+        deal_data = deal.get("deal", {}) if "deal" in deal else deal
+        
+        # Create 6 columns for better spacing - more columns = more spread out
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        
+        with col1:
+            funding = deal_data.get("funding_amount", 0)
+            if funding >= 1_000_000_000:
+                funding_str = f"${funding/1_000_000_000:.1f}B"
+            elif funding > 0:
+                funding_str = f"${funding/1_000_000:.1f}M"
+            else:
+                funding_str = "N/A"
             
-            with col1:
-                # Company name and description
-                name = deal.get("deal", {}).get("name") if "deal" in deal else deal.get("name", "Unknown")
-                desc = deal.get("deal", {}).get("description") if "deal" in deal else deal.get("description", "")
-                
-                st.write(f"### {name}")
-                if desc:
-                    st.caption(desc[:200] + "..." if len(desc) > 200 else desc)
-            
-            with col2:
-                # Key metrics
-                deal_data = deal.get("deal", {}) if "deal" in deal else deal
-                
-                funding = deal_data.get("funding_amount", 0)
-                if funding:
-                    st.metric("Funding", f"${funding/1_000_000:.1f}M")
-                
-                stage = deal_data.get("stage", "N/A")
-                if stage:
-                    st.write(f"**Stage:** {stage}")
-                
-                location = deal_data.get("location", "N/A")
-                if location:
-                    st.write(f"**Location:** {location}")
-            
-            with col3:
-                # Score and source
-                if "score" in deal:
-                    score = deal.get("score", 0)
-                    score_color = "🟢" if score >= 75 else "🟡" if score >= 60 else "🔴"
-                    st.metric("Score", f"{score_color} {score:.0f}")
-                
-                source = deal_data.get("source", "Unknown")
-                source_url = deal_data.get("source_url", "")
-                source_article = deal_data.get("source_article_title", "")
-                
-                if source_url:
-                    # Show clickable link to original article
-                    st.markdown(f"**Source:** [{source}]({source_url})")
-                    if source_article:
-                        st.caption(f"📰 {source_article[:50]}..." if len(source_article) > 50 else f"📰 {source_article}")
-                else:
-                    st.caption(f"📍 {source}")
-            
-            st.divider()
+            st.markdown(f"""
+            <div style="padding: 15px; background-color: rgba(28, 131, 225, 0.1); border-radius: 8px; min-height: 90px;">
+                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">💰 Funding</div>
+                <div style="font-size: 22px; font-weight: bold;">{funding_str}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            stage = deal_data.get("stage", "N/A")
+            st.markdown(f"""
+            <div style="padding: 15px; background-color: rgba(28, 131, 225, 0.1); border-radius: 8px; min-height: 90px;">
+                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">📊 Stage</div>
+                <div style="font-size: 20px; font-weight: bold;">{stage}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            location = deal_data.get("location", "N/A")
+            st.markdown(f"""
+            <div style="padding: 15px; background-color: rgba(28, 131, 225, 0.1); border-radius: 8px; min-height: 90px;">
+                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">📍 Location</div>
+                <div style="font-size: 18px; font-weight: bold;">{location}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            # Score
+            if "score" in deal:
+                score = deal.get("score", 0)
+                score_color = "#00C851" if score >= 75 else "#ffbb33" if score >= 60 else "#ff4444"
+                score_emoji = "🟢" if score >= 75 else "🟡" if score >= 60 else "🔴"
+                st.markdown(f"""
+                <div style="padding: 15px; background-color: rgba(28, 131, 225, 0.1); border-radius: 8px; min-height: 90px;">
+                    <div style="font-size: 13px; color: #888; margin-bottom: 8px;">Score</div>
+                    <div style="font-size: 22px; font-weight: bold; color: {score_color};">{score_emoji} {score:.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.write("")
+        
+        with col5:
+            # Industry
+            industry = deal_data.get("industry", "N/A")
+            st.markdown(f"""
+            <div style="padding: 15px; background-color: rgba(28, 131, 225, 0.1); border-radius: 8px; min-height: 90px;">
+                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">🏢 Industry</div>
+                <div style="font-size: 18px; font-weight: bold;">{industry}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col6:
+            # Founded Year or Employees
+            founded = deal_data.get("founded_year", "N/A")
+            st.markdown(f"""
+            <div style="padding: 15px; background-color: rgba(28, 131, 225, 0.1); border-radius: 8px; min-height: 90px;">
+                <div style="font-size: 13px; color: #888; margin-bottom: 8px;">📅 Founded</div>
+                <div style="font-size: 20px; font-weight: bold;">{founded}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.write("")  # Spacing
+        
+        # Source information
+        source = deal_data.get("source", "Unknown")
+        source_url = deal_data.get("source_url", "")
+        source_article = deal_data.get("source_article_title", "")
+        
+        if source_url:
+            st.markdown(f"**🔗 Source:** [{source}]({source_url})")
+            if source_article:
+                st.caption(f"📰 {source_article}")
+        else:
+            st.caption(f"**Source:** {source}")
 
 
 def display_qualified_deals_table(deals):
@@ -1289,14 +1321,14 @@ def show_market_analysis_tab():
                     
                     # Show sources for key drivers
                     if data.get('sources') and data['sources'].get('key_drivers'):
-                        with st.expander("📚 Sources & References"):
+                        with st.expander("Sources & References"):
                             for i, source in enumerate(data['sources']['key_drivers'], 1):
                                 st.caption(f"{i}. {source}")
                     
                     # Regulatory
                     if include_regulatory:
                         st.write("---")
-                        st.write("### ⚖️ Regulatory Environment")
+                        st.write("### Regulatory Environment")
                         st.write(data['regulatory_environment'])
                         
                         # Show sources for regulatory environment
@@ -1532,8 +1564,8 @@ def show_upload_page():
         **Supported File Types:**
         - **Documents:** PDF, DOCX, DOC, TXT
         - **Spreadsheets:** XLSX, XLS, CSV
-        - 📽️ **Presentations:** PPTX, PPT
-        - 🖼️ **Images:** JPG, JPEG, PNG (with OCR)
+        - **Presentations:** PPTX, PPT
+        - **Images:** JPG, JPEG, PNG (with OCR)
         
         **Upload Guidelines:**
         - Maximum file size: 100 MB per file
@@ -1562,7 +1594,7 @@ def show_library_page():
         st.write("")  # Spacing
     
     with col3:
-        if st.button("🔄 Refresh", use_container_width=True):
+        if st.button("Refresh", use_container_width=True):
             st.rerun()
     
     # Get files
@@ -1639,7 +1671,7 @@ def show_analysis_page():
         
         # Show LLM info if selected
         if analysis_type == "llm_powered":
-            st.info("**LLM-Powered Analysis**: Uses AI to provide deep insights, risk assessment, and investment recommendations. Pre-processes with keyword analysis then applies GPT-4 reasoning.")
+            st.info("**LLM-Powered Analysis**: Uses AI to provide deep insights, risk assessment, and investment recommendations. Applies GPT-4 reasoning.")
     
     # Analyze button
     if st.button("Analyze Document", type="primary", use_container_width=True):
@@ -2863,7 +2895,7 @@ def show_reports_page():
         st.write("---")
         
         # Show deck templates
-        st.write("**📽️ Pitch Deck Templates**")
+        st.write("**Pitch Deck Templates**")
         if deck_templates:
             for template in deck_templates:
                 with st.expander(f"{template['name']}"):
