@@ -8,6 +8,7 @@ from pathlib import Path
 import os
 from datetime import datetime
 from typing import List, Optional
+import pandas as pd
 
 # Page configuration
 st.set_page_config(
@@ -2042,19 +2043,458 @@ def display_financial_analysis(analysis: dict):
 
 
 def show_modeling_page():
-    """Financial modeling page - placeholder for Phase 4"""
+    """Financial modeling page - Feature 4: Financial Modeling & Scenario Planning"""
     
-    st.write("### 💰 Financial Modeling")
-    st.info("🚧 Financial modeling features will be available in Phase 4")
+    st.write("### 💰 Financial Modeling & Scenario Planning")
+    st.write("Generate financial projections, run what-if scenarios, and export to Excel")
     
-    st.write("""
-    **Coming Soon:**
-    - 📊 Revenue projections
-    - 💵 Cash flow modeling
-    - 📈 Valuation models
-    - 🎯 Scenario planning
-    - 📉 Sensitivity analysis
-    """)
+    # Tabs for different workflows
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📊 Build Model", 
+        "📈 Scenario Analysis", 
+        "📁 Templates",
+        "📥 Import from Documents"
+    ])
+    
+    with tab1:
+        show_build_model_tab()
+    
+    with tab2:
+        show_scenario_analysis_tab()
+    
+    with tab3:
+        show_model_templates_tab()
+    
+    with tab4:
+        show_import_financials_tab()
+
+
+def show_build_model_tab():
+    """Build financial projection model"""
+    st.write("#### Build Financial Projection Model")
+    st.write("Configure assumptions and generate 3-5 year projections")
+    
+    # Split into two columns: inputs and preview
+    col1, col2 = st.columns([1, 1])
+    
+    with col1:
+        st.write("**Model Configuration**")
+        
+        # Basic settings
+        model_name = st.text_input("Model Name", value="New Financial Model")
+        projection_months = st.slider("Projection Period (Months)", 12, 60, 36, 6)
+        
+        st.divider()
+        
+        # Revenue assumptions
+        st.write("**Revenue Assumptions**")
+        revenue_start = st.number_input("Starting Monthly Revenue ($)", min_value=0, value=100000, step=10000)
+        revenue_growth = st.slider("Monthly Growth Rate (%)", 0.0, 50.0, 15.0, 0.5) / 100
+        
+        st.divider()
+        
+        # Cost assumptions
+        st.write("**Cost Assumptions**")
+        cogs_percent = st.slider("COGS (% of Revenue)", 0, 100, 30, 5) / 100
+        opex_fixed = st.number_input("Fixed Monthly OpEx ($)", min_value=0, value=50000, step=5000)
+        opex_variable = st.slider("Variable OpEx (% of Revenue)", 0, 100, 20, 5) / 100
+        
+        st.divider()
+        
+        # Funding
+        st.write("**Funding & Capital**")
+        starting_cash = st.number_input("Starting Cash ($)", min_value=0, value=100000, step=10000)
+        
+        # Equity raises
+        with st.expander("Add Equity Raises"):
+            equity_raises = []
+            num_equity = st.number_input("Number of equity raises", 0, 5, 0)
+            for i in range(num_equity):
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    month = st.number_input(f"Month #{i+1}", 1, projection_months, key=f"eq_month_{i}")
+                with col_b:
+                    amount = st.number_input(f"Amount ${i+1}", 0, key=f"eq_amt_{i}", step=100000)
+                if amount > 0:
+                    equity_raises.append({"month": int(month), "amount": float(amount)})
+        
+        # Capex
+        with st.expander("Add Capital Expenditures"):
+            capex_schedule = []
+            num_capex = st.number_input("Number of capex items", 0, 5, 0)
+            for i in range(num_capex):
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    month = st.number_input(f"Month #{i+1}", 1, projection_months, key=f"cx_month_{i}")
+                with col_b:
+                    amount = st.number_input(f"Amount ${i+1}", 0, key=f"cx_amt_{i}", step=50000)
+                if amount > 0:
+                    capex_schedule.append({"month": int(month), "amount": float(amount)})
+        
+        st.divider()
+        
+        # Tax assumptions
+        tax_rate = st.slider("Tax Rate (%)", 0, 50, 28, 1) / 100
+        
+        # Generate button
+        if st.button("� Generate Projections", type="primary", use_container_width=True):
+            # Prepare assumptions
+            assumptions = {
+                "revenue_start": revenue_start,
+                "revenue_growth_rate": revenue_growth,
+                "cogs_percent": cogs_percent,
+                "opex_fixed": opex_fixed,
+                "opex_variable_percent": opex_variable,
+                "starting_cash": starting_cash,
+                "equity_raises": equity_raises,
+                "capex_schedule": capex_schedule,
+                "tax_rate": tax_rate,
+                "debt_raises": [],
+                "days_receivables": 30,
+                "days_payables": 45,
+                "days_inventory": 0,
+                "depreciation_rate": 0.10
+            }
+            
+            with st.spinner("Generating projections..."):
+                try:
+                    # Call API
+                    response = requests.post(
+                        f"{API_BASE_URL}/modeling/generate",
+                        json={
+                            "assumptions": assumptions,
+                            "months": projection_months
+                        }
+                    )
+                    
+                    if response.ok:
+                        result = response.json()
+                        model_data = result.get("model", {})
+                        
+                        # Store in session state
+                        st.session_state['current_model'] = model_data
+                        st.session_state['model_name'] = model_name
+                        
+                        st.success("✅ Model generated successfully!")
+                        st.rerun()
+                    else:
+                        st.error(f"Error: {response.text}")
+                        
+                except Exception as e:
+                    st.error(f"Error generating model: {str(e)}")
+    
+    with col2:
+        st.write("**Model Preview**")
+        
+        # Show current model if available
+        if 'current_model' in st.session_state:
+            model = st.session_state['current_model']
+            projections = model.get('projections', [])
+            metrics = model.get('metrics', {})
+            
+            # Key metrics
+            st.write("**Key Metrics**")
+            met_col1, met_col2, met_col3 = st.columns(3)
+            
+            with met_col1:
+                st.metric(
+                    "Total Revenue",
+                    f"${metrics.get('total_revenue', 0):,.0f}"
+                )
+            
+            with met_col2:
+                months_profit = metrics.get('months_to_profitability', 'N/A')
+                if months_profit != 'Never':
+                    st.metric("Months to Profit", months_profit)
+                else:
+                    st.metric("Months to Profit", "Never")
+            
+            with met_col3:
+                st.metric(
+                    "Final Cash",
+                    f"${metrics.get('final_cash_balance', 0):,.0f}"
+                )
+            
+            st.divider()
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(projections)
+            
+            # Display summary table (first 12 months)
+            st.write("**First 12 Months Summary**")
+            display_df = df.head(12)[[
+                'month', 'revenue', 'gross_profit', 'ebitda', 
+                'net_income', 'closing_cash'
+            ]].copy()
+            
+            # Format currency columns
+            for col in ['revenue', 'gross_profit', 'ebitda', 'net_income', 'closing_cash']:
+                display_df[col] = display_df[col].apply(lambda x: f"${x:,.0f}")
+            
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+            
+            st.divider()
+            
+            # Cash flow chart
+            st.write("**Cash Balance Over Time**")
+            chart_df = df[['month', 'closing_cash']].copy()
+            chart_df.columns = ['Month', 'Cash Balance']
+            st.line_chart(chart_df.set_index('Month'))
+            
+            # Revenue chart
+            st.write("**Revenue Growth**")
+            rev_df = df[['month', 'revenue']].copy()
+            rev_df.columns = ['Month', 'Revenue']
+            st.line_chart(rev_df.set_index('Month'))
+            
+            # Export buttons
+            st.divider()
+            st.write("**Export Model**")
+            
+            export_col1, export_col2 = st.columns(2)
+            
+            with export_col1:
+                if st.button("📥 Download Excel", use_container_width=True):
+                    try:
+                        response = requests.post(
+                            f"{API_BASE_URL}/modeling/export",
+                            json={
+                                "projections_data": model,
+                                "format": "excel",
+                                "file_name": st.session_state.get('model_name', 'financial_model')
+                            }
+                        )
+                        
+                        if response.ok:
+                            st.download_button(
+                                label="💾 Save Excel File",
+                                data=response.content,
+                                file_name=f"{st.session_state.get('model_name', 'financial_model')}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            )
+                    except Exception as e:
+                        st.error(f"Export error: {str(e)}")
+            
+            with export_col2:
+                if st.button("📄 Download CSV", use_container_width=True):
+                    csv = df.to_csv(index=False)
+                    st.download_button(
+                        label="💾 Save CSV File",
+                        data=csv,
+                        file_name=f"{st.session_state.get('model_name', 'financial_model')}.csv",
+                        mime="text/csv"
+                    )
+        
+        else:
+            st.info("👈 Configure assumptions and click 'Generate Projections' to see results")
+
+
+def show_scenario_analysis_tab():
+    """Run what-if scenario analysis"""
+    st.write("#### Scenario Analysis")
+    st.write("Compare best case, base case, and worst case scenarios")
+    
+    # Check if we have a base model
+    if 'current_model' not in st.session_state:
+        st.warning("⚠️ Please generate a base model first in the 'Build Model' tab")
+        return
+    
+    model = st.session_state['current_model']
+    assumptions = model.get('assumptions', {})
+    
+    st.write("**Base Model Assumptions**")
+    st.json(assumptions)
+    
+    st.divider()
+    
+    # Scenario selection
+    scenarios = st.multiselect(
+        "Select Scenarios to Compare",
+        ["base", "best", "worst"],
+        default=["base", "best", "worst"]
+    )
+    
+    if st.button("� Run Scenario Analysis", type="primary"):
+        with st.spinner("Running scenarios..."):
+            try:
+                response = requests.post(
+                    f"{API_BASE_URL}/modeling/scenario",
+                    json={
+                        "assumptions": assumptions,
+                        "months": model.get('months', 36),
+                        "scenarios": scenarios
+                    }
+                )
+                
+                if response.ok:
+                    result = response.json()
+                    st.session_state['scenario_results'] = result
+                    st.success("✅ Scenario analysis complete!")
+                    st.rerun()
+                else:
+                    st.error(f"Error: {response.text}")
+                    
+            except Exception as e:
+                st.error(f"Error running scenarios: {str(e)}")
+    
+    # Display scenario results
+    if 'scenario_results' in st.session_state:
+        results = st.session_state['scenario_results']
+        comparison = results.get('comparison', {})
+        
+        st.divider()
+        st.write("**Scenario Comparison**")
+        
+        # Metrics comparison
+        metrics_data = []
+        for scenario_name, scenario_metrics in comparison.items():
+            metrics_data.append({
+                "Scenario": scenario_name.title(),
+                "Final Cash": f"${scenario_metrics.get('final_cash', 0):,.0f}",
+                "Total Revenue": f"${scenario_metrics.get('total_revenue', 0):,.0f}",
+                "Months to Profit": scenario_metrics.get('months_to_profitability', 'N/A')
+            })
+        
+        st.table(pd.DataFrame(metrics_data))
+        
+        st.divider()
+        
+        # Cash flow comparison chart
+        st.write("**Cash Balance Comparison**")
+        
+        scenario_data = results.get('scenarios', {})
+        chart_data = {}
+        
+        for scenario_name in scenarios:
+            if scenario_name in scenario_data:
+                projections = scenario_data[scenario_name]['projections']
+                df = pd.DataFrame(projections)
+                chart_data[scenario_name.title()] = df['closing_cash'].values
+        
+        if chart_data:
+            chart_df = pd.DataFrame(chart_data)
+            st.line_chart(chart_df)
+        
+        # Revenue comparison
+        st.write("**Revenue Comparison**")
+        
+        rev_data = {}
+        for scenario_name in scenarios:
+            if scenario_name in scenario_data:
+                projections = scenario_data[scenario_name]['projections']
+                df = pd.DataFrame(projections)
+                rev_data[scenario_name.title()] = df['revenue'].values
+        
+        if rev_data:
+            rev_df = pd.DataFrame(rev_data)
+            st.line_chart(rev_df)
+
+
+def show_model_templates_tab():
+    """Show available model templates"""
+    st.write("#### Financial Model Templates")
+    st.write("Start with pre-configured templates for common business models")
+    
+    try:
+        response = requests.get(f"{API_BASE_URL}/modeling/templates")
+        
+        if response.ok:
+            result = response.json()
+            templates = result.get('templates', [])
+            
+            # Display templates as cards
+            cols = st.columns(2)
+            
+            for idx, template in enumerate(templates):
+                with cols[idx % 2]:
+                    with st.container():
+                        st.write(f"**{template['name']}**")
+                        st.write(template['description'])
+                        st.write(f"*Key Fields:* {', '.join(template['fields'])}")
+                        
+                        if st.button(f"Use Template", key=f"template_{template['id']}"):
+                            st.session_state['selected_template'] = template
+                            st.info(f"✅ Template '{template['name']}' selected. Switch to 'Build Model' tab to configure.")
+                    
+                    st.divider()
+        
+        else:
+            st.error(f"Error loading templates: {response.text}")
+            
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+
+
+def show_import_financials_tab():
+    """Import financial data from documents"""
+    st.write("#### Import from Documents")
+    st.write("Extract historical financial data from uploaded documents")
+    
+    # Get list of uploaded documents
+    try:
+        docs_response = requests.get(f"{API_BASE_URL}/documents/list")
+        
+        if docs_response.ok:
+            documents = docs_response.json().get('documents', [])
+            
+            if not documents:
+                st.warning("No documents available. Upload financial statements in the 'Upload Documents' page first.")
+                return
+            
+            # Select document
+            doc_options = {doc['filename']: doc['file_path'] for doc in documents}
+            selected_doc = st.selectbox("Select Financial Document", list(doc_options.keys()))
+            
+            doc_type = st.selectbox(
+                "Document Type",
+                ["financial_statement", "cash_flow", "income_statement", "balance_sheet", "pitch_deck"]
+            )
+            
+            if st.button("� Extract Financial Data", type="primary"):
+                with st.spinner("Extracting data..."):
+                    try:
+                        response = requests.post(
+                            f"{API_BASE_URL}/modeling/extract",
+                            json={
+                                "file_path": doc_options[selected_doc],
+                                "document_type": doc_type
+                            }
+                        )
+                        
+                        if response.ok:
+                            result = response.json()
+                            extracted = result.get('extracted_data', {})
+                            inferred = result.get('inferred_assumptions', {})
+                            
+                            st.success("✅ Data extracted successfully!")
+                            
+                            # Display extracted data
+                            st.write("**Extracted Financial Data**")
+                            st.json(extracted)
+                            
+                            st.divider()
+                            
+                            # Display inferred assumptions
+                            st.write("**Inferred Model Assumptions**")
+                            st.json(inferred)
+                            
+                            # Option to use these assumptions
+                            if st.button("📊 Build Model from This Data"):
+                                st.session_state['imported_assumptions'] = inferred
+                                st.info("✅ Assumptions imported. Switch to 'Build Model' tab to review and generate projections.")
+                        
+                        else:
+                            st.error(f"Error: {response.text}")
+                            
+                    except Exception as e:
+                        st.error(f"Error extracting data: {str(e)}")
+        
+        else:
+            st.error("Could not load documents")
+            
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+
 
 
 def show_reports_page():
